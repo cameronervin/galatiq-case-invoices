@@ -1,13 +1,22 @@
+from datetime import UTC, datetime
 from decimal import Decimal
+from uuid import UUID
 
 import pytest
 from pydantic import ValidationError
 
 from backend.app.schemas.domain import (
+    InvoiceData as ExportedInvoiceData,
+)
+from backend.app.schemas.domain import (
+    RunStatus as ExportedRunStatus,
+)
+from backend.app.schemas.invoice import InvoiceData, InvoiceItem, Money
+from backend.app.schemas.payment import PaymentResult
+from backend.app.schemas.review import ReviewRequest
+from backend.app.schemas.runs import RunDetail
+from backend.app.schemas.workflow import (
     FindingSeverity,
-    InvoiceData,
-    InvoiceItem,
-    Money,
     RunStage,
     RunStatus,
     ValidationFinding,
@@ -76,3 +85,35 @@ def test_invoice_and_finding_round_trip_through_json() -> None:
 
     assert InvoiceData.model_validate_json(invoice.model_dump_json()) == invoice
     assert ValidationFinding.model_validate_json(finding.model_dump_json()) == finding
+
+
+def test_domain_module_remains_a_compatibility_export_surface() -> None:
+    assert ExportedInvoiceData is InvoiceData
+    assert ExportedRunStatus is RunStatus
+
+
+def test_review_request_normalizes_reason_in_focused_module() -> None:
+    request = ReviewRequest(decision="approve", reason="  Matches receipt.  ")
+
+    assert request.reason == "Matches receipt."
+
+
+def test_run_detail_round_trips_nested_payment_across_schema_modules() -> None:
+    timestamp = datetime(2026, 7, 24, 12, 0, tzinfo=UTC)
+    detail = RunDetail(
+        run_id=UUID("00000000-0000-0000-0000-000000000001"),
+        source_filename="invoice.json",
+        status=RunStatus.COMPLETED,
+        stage=RunStage.FINALIZE,
+        created_at=timestamp,
+        updated_at=timestamp,
+        payment=PaymentResult(
+            status="succeeded",
+            amount=Money(amount="20.00", currency="USD"),
+            mock_reference="MOCK-1",
+            created_at=timestamp,
+            updated_at=timestamp,
+        ),
+    )
+
+    assert RunDetail.model_validate_json(detail.model_dump_json()) == detail

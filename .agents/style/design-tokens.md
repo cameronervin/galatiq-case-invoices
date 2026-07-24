@@ -1,6 +1,8 @@
 # Invoice Processing Design Tokens
 
-Source of truth: `frontend/src/app/globals.css`.
+Source of truth: `frontend/src/app/styles/foundations.css`. The thin
+`frontend/src/app/globals.css` entrypoint imports the responsibility-focused
+stylesheets in deliberate cascade order.
 
 | Token | Current value | Use |
 | --- | --- | --- |

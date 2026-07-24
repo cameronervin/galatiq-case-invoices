@@ -1,0 +1,149 @@
+.workspace-grid {
+  display: grid;
+  grid-template-columns: minmax(260px, 0.31fr) minmax(0, 1fr);
+  grid-template-areas: "recent detail";
+  gap: 16px;
+  align-items: start;
+}
+
+.recent-runs,
+.detail-panel,
+.panel {
+  border: 1px solid var(--line);
+  border-radius: 14px;
+  background: var(--surface);
+  box-shadow: 0 8px 26px rgb(23 33 29 / 4%);
+}
+
+.recent-runs {
+  grid-area: recent;
+  position: sticky;
+  top: 18px;
+  overflow: hidden;
+}
+
+.section-heading {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  gap: 16px;
+  padding: 18px;
+  border-bottom: 1px solid var(--line);
+}
+
+.section-heading.compact {
+  padding: 0 0 14px;
+  border: 0;
+}
+
+.section-heading h2 {
+  font-size: 1.05rem;
+}
+
+.section-heading h3,
+.detail-section h3,
+.review-panel h3 {
+  font-size: 1rem;
+}
+
+.record-count,
+.confidence {
+  color: var(--muted);
+  font-size: 0.72rem;
+  font-weight: 700;
+}
+
+.confidence {
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--mint);
+  color: var(--forest);
+  text-transform: capitalize;
+}
+
+.run-list {
+  max-height: 650px;
+  margin: 0;
+  padding: 0;
+  overflow-y: auto;
+  list-style: none;
+}
+
+.run-list li + li {
+  border-top: 1px solid var(--line);
+}
+
+.run-list-item {
+  display: grid;
+  width: 100%;
+  grid-template-columns: minmax(0, 1fr) auto;
+  gap: 8px;
+  padding: 15px 18px;
+  border: 0;
+  border-left: 3px solid transparent;
+  background: transparent;
+  color: inherit;
+  cursor: pointer;
+  text-align: left;
+}
+
+.run-list-item:hover,
+.run-list-item[data-selected="true"] {
+  background: #f1f6f2;
+}
+
+.run-list-item[data-selected="true"] {
+  border-left-color: var(--forest);
+}
+
+.run-list-name {
+  overflow: hidden;
+  font-size: 0.86rem;
+  font-weight: 750;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.run-list-meta {
+  grid-column: 1 / -1;
+  color: var(--muted);
+  font-size: 0.72rem;
+}
+
+.status-badge {
+  display: inline-flex;
+  flex: none;
+  align-items: center;
+  gap: 6px;
+  width: fit-content;
+  padding: 4px 8px;
+  border-radius: 999px;
+  background: var(--blue-soft);
+  color: var(--blue);
+  font-size: 0.69rem;
+  font-weight: 800;
+  white-space: nowrap;
+}
+
+.status-dot {
+  width: 6px;
+  height: 6px;
+  border-radius: 50%;
+  background: currentColor;
+}
+
+.status-completed {
+  background: var(--mint);
+  color: var(--forest);
+}
+
+.status-review_required {
+  background: var(--amber-soft);
+  color: var(--amber);
+}
+
+.status-rejected,
+.status-failed {
+  background: var(--red-soft);
+  color: var(--red);
+}

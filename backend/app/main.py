@@ -8,11 +8,13 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse
 
 from backend.app.api.v1.router import api_router
+from backend.app.bootstrap.application import ApplicationRuntime
 from backend.app.core.config import Settings, get_settings
 from backend.app.core.logging import configure_logging
+from backend.app.infrastructure.queue.celery_dispatcher import CeleryTaskDispatcher
+from backend.app.ports.queue import TaskDispatcher
 from backend.app.schemas.domain import ErrorBody, ErrorEnvelope
-from backend.app.services.agent_run_service import CeleryTaskDispatcher, TaskDispatcher
-from backend.app.services.invoice_processing import InvoiceProcessingService
+from backend.app.workers.app import celery_app
 
 logger = structlog.get_logger(__name__)
 
@@ -20,12 +22,17 @@ logger = structlog.get_logger(__name__)
 @asynccontextmanager
 async def lifespan(app: FastAPI) -> AsyncIterator[None]:
     configure_logging(app.state.settings.log_level)
-    app.state.processor = InvoiceProcessingService(app.state.settings)
+    app.state.runtime = ApplicationRuntime.create(
+        app.state.settings,
+        app.state.dispatcher,
+    )
+    # Compatibility alias for CLI-like setup in API integration tests.
+    app.state.processor = app.state.runtime.processor
     logger.info("api_started", env=app.state.settings.env)
     try:
         yield
     finally:
-        app.state.processor.close()
+        app.state.runtime.close()
         logger.info("api_stopped", env=app.state.settings.env)
 
 
@@ -42,7 +49,7 @@ def create_app(
         lifespan=lifespan,
     )
     app.state.settings = app_settings
-    app.state.dispatcher = dispatcher or CeleryTaskDispatcher()
+    app.state.dispatcher = dispatcher or CeleryTaskDispatcher(celery_app)
 
     @app.exception_handler(RequestValidationError)
     async def validation_error_handler(

@@ -30,7 +30,11 @@ export function ReviewPanel({ pending, onReview }: ReviewPanelProps) {
   }
 
   return (
-    <section className="panel review-panel" aria-labelledby="review-heading">
+    <section
+      className="panel review-panel"
+      aria-busy={pending}
+      aria-labelledby="review-heading"
+    >
       <p className="panel-kicker">Action required</p>
       <h3 id="review-heading">Human review</h3>
       <p>Review the warnings and recommendation before deciding.</p>
@@ -67,6 +71,9 @@ export function ReviewPanel({ pending, onReview }: ReviewPanelProps) {
           Reject invoice
         </button>
       </div>
+      <p className="sr-only" role="status" aria-live="polite">
+        {pending ? "Recording review…" : ""}
+      </p>
     </section>
   );
 }

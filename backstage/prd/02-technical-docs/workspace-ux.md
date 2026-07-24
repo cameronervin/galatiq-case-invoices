@@ -18,13 +18,17 @@ upload, selected run, and recent runs without horizontal scrolling.
 | Failed | Safe error | Upload invoice again |
 | Completed | Approval and simulated payment | Inspect timeline |
 
-There is no retry control. Active detail polls every two seconds without overlap
-and stops on review or terminal status. Transient polling errors retain the last
-successful state.
+There is no failed-workflow retry control. Active detail polls every two seconds
+without overlap and stops on an undecided review or terminal status. A persisted
+review waiting for worker resume continues polling. Transient polling errors keep
+the selection safe and schedule another attempt; stale responses from a previous
+selection are ignored.
 
 Review requires a 3-500 character reason. Approval opens a confirmation that
 explicitly says payment is simulated and preserves original currency. Pending
-actions are disabled and announced; a `409` refreshes authoritative state.
+actions are disabled and announced; a `409` refreshes authoritative state. If the
+decision was saved but queue dispatch failed, the persisted decision is shown with
+one identical worker-resume retry action.
 
 Use semantic headings, landmarks, labels, native controls, visible focus,
 keyboard operation, status text in addition to color, `aria-live` for user

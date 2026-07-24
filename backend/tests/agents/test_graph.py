@@ -1,6 +1,6 @@
 from pathlib import Path
 
-from backend.app.agents.graph_provider import GraphProvider
+from backend.app.infrastructure.graph.provider import GraphProvider
 
 
 def test_graph_provider_reuses_compiled_graph(tmp_path: Path) -> None:

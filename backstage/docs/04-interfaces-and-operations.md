@@ -32,6 +32,8 @@ All routes use `/api/v1`:
 There is no retry endpoint, offset pagination, total count, or status filter.
 Errors use a stable code, safe message, and optional run ID. Public contracts do
 not expose paths, prompts, keys, provider payloads, documents, or hidden reasoning.
+Upload validation distinguishes `EMPTY_FILE`, `UNSUPPORTED_FILE_TYPE`, and
+`FILE_TOO_LARGE`; the last uses the configured effective byte limit.
 
 ## Celery contract
 
@@ -42,19 +44,27 @@ run the broker-free CLI and it does not store complete business state in Valkey.
 
 ## Frontend and OpenAPI
 
-The Next.js workspace supports upload, newest-20 navigation, polling, invoice and
-finding inspection, timeline, human review, and terminal outcomes. Payment copy
-always says the payment is simulated; failed runs have no retry control.
+The Next.js workspace supports upload, newest-20 navigation, selected-run polling,
+invoice and finding inspection, timeline, human review, and terminal outcomes.
+Polling ignores stale selection responses and retries transient read failures. A
+review saved during a queue outage exposes an identical worker-resume redispatch;
+failed workflow runs still have no retry control. Payment copy always says the
+payment is simulated.
+
+Transport, runtime response decoding, workspace orchestration, and run-detail
+presentation are separate modules. Runtime decoders reject malformed nested API
+responses before they reach components, and list/review state is keyed so stale
+requests cannot regress a newer run or disable an unrelated selection.
 
 `frontend/openapi.json` is a checked-in generated contract snapshot, not a runtime
-dependency. `make generate-api-types` exports FastAPI's current OpenAPI document
-and regenerates `src/types/generated-api.ts`. Checking both in makes API/type drift
-visible in review and lets frontend validation run without a live backend.
+dependency. `make generate-api-types` intentionally refreshes the snapshot and
+`src/types/generated-api.ts`; `make check-generated` compares both with temporary
+fresh outputs and fails on drift without rewriting the worktree.
 
 Validate the UI with:
 
 ```bash
-make generate-api-types
+make check-generated
 make test-frontend
 make lint-frontend
 make typecheck-frontend

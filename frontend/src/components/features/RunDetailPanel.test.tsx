@@ -1,0 +1,42 @@
+import { render, screen } from "@testing-library/react";
+
+import type { RunDetail } from "@/types/api";
+
+import { RunDetailPanel } from "./RunDetailPanel";
+
+it("shows safe recommendation reason codes", () => {
+  const detail: RunDetail = {
+    run_id: "11111111-1111-4111-8111-111111111111",
+    source_filename: "rejected.txt",
+    status: "rejected",
+    stage: "finalize",
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:01Z",
+    invoice: null,
+    findings: [],
+    recommendation: {
+      proposed_route: "reject",
+      final_route: "reject",
+      reason_codes: ["BLOCKING_FINDING", "POLICY_OVERRIDE"],
+      summary: "Rejected safely.",
+      reflection_count: 1,
+      decided_by: "policy"
+    },
+    review: null,
+    payment: null,
+    events: [],
+    error: null
+  };
+
+  render(
+    <RunDetailPanel
+      detail={detail}
+      focusVersion={0}
+      reviewPending={false}
+      onReview={jest.fn()}
+    />
+  );
+
+  expect(screen.getByText("BLOCKING_FINDING")).toBeInTheDocument();
+  expect(screen.getByText("POLICY_OVERRIDE")).toBeInTheDocument();
+});

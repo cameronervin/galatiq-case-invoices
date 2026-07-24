@@ -5,7 +5,6 @@ type ApiSchemas = components["schemas"];
 export type RunStatus = ApiSchemas["RunStatus"];
 export type RunStage = ApiSchemas["RunStage"];
 export type FindingSeverity = ApiSchemas["FindingSeverity"];
-export type HealthResponse = ApiSchemas["HealthResponse"];
 export type Money = ApiSchemas["Money"];
 export type InvoiceItem = Required<ApiSchemas["InvoiceItem"]>;
 export type InvoiceData = Omit<Required<ApiSchemas["InvoiceData"]>, "items"> & {

@@ -7,8 +7,9 @@ import sys
 from collections.abc import Sequence
 from pathlib import Path
 
+from backend.app.bootstrap.invoice_runtime import build_invoice_processor
 from backend.app.core.config import Settings, get_settings
-from backend.app.infrastructure.llm.factory import ProviderConfigurationError
+from backend.app.ports.providers import ProviderConfigurationError
 from backend.app.schemas.domain import ErrorBody, ErrorEnvelope, RunStatus
 from backend.app.services.invoice_processing import (
     InvalidInvoiceInput,
@@ -43,7 +44,7 @@ def run(
         return EXIT_INVALID_INPUT
     processor: InvoiceProcessingService | None = None
     try:
-        processor = InvoiceProcessingService(settings or get_settings())
+        processor = build_invoice_processor(settings or get_settings())
         detail = processor.process_path(
             args.invoice_path,
             origin="cli",

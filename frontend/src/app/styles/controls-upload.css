@@ -1,0 +1,130 @@
+.upload-card {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 24px;
+  padding: 20px 22px;
+  border: 1px solid var(--line-strong);
+  border-radius: 14px;
+  background: var(--surface-strong);
+  box-shadow: 0 10px 32px rgb(23 33 29 / 5%);
+}
+
+.upload-card h2 {
+  font-size: 1.12rem;
+}
+
+.upload-card p:not(.panel-kicker) {
+  margin: 5px 0 0;
+  color: var(--muted);
+  font-size: 0.86rem;
+}
+
+.upload-actions {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.button-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.file-picker {
+  display: block;
+  min-width: 210px;
+  max-width: 320px;
+  padding: 11px 13px;
+  overflow: hidden;
+  border: 1px dashed var(--line-strong);
+  border-radius: 8px;
+  background: var(--canvas);
+  color: var(--muted);
+  cursor: pointer;
+  font-size: 0.86rem;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.file-picker:focus-within {
+  outline: 3px solid rgb(40 93 135 / 40%);
+  outline-offset: 2px;
+}
+
+.file-picker input {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  clip-path: inset(50%);
+  white-space: nowrap;
+}
+
+.button {
+  min-height: 44px;
+  padding: 10px 15px;
+  border: 1px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 0.84rem;
+  font-weight: 750;
+  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
+}
+
+.button:hover:not(:disabled) {
+  transform: translateY(-1px);
+}
+
+.button:disabled {
+  cursor: wait;
+  opacity: 0.56;
+}
+
+.button-primary {
+  background: var(--forest);
+  color: #ffffff;
+}
+
+.button-primary:hover:not(:disabled) {
+  background: var(--forest-hover);
+}
+
+.button-danger {
+  border-color: #d6a29d;
+  background: #ffffff;
+  color: var(--red);
+}
+
+.button-secondary {
+  margin-top: 12px;
+  border-color: var(--line-strong);
+  background: var(--surface-strong);
+  color: var(--forest);
+}
+
+.announcement {
+  min-height: 38px;
+  padding: 8px 0;
+}
+
+.alert {
+  margin: 0;
+  padding: 8px 12px;
+  border-radius: 7px;
+  font-size: 0.83rem;
+}
+
+.alert-error,
+.upload-card p.alert-error {
+  background: var(--red-soft);
+  color: var(--red);
+}
+
+.alert-success {
+  background: var(--mint);
+  color: var(--forest);
+}

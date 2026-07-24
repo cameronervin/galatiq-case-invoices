@@ -2,9 +2,9 @@ from pathlib import Path
 from types import SimpleNamespace
 from uuid import UUID
 
+from backend.app.bootstrap.invoice_runtime import build_invoice_processor
 from backend.app.core.config import Settings
-from backend.app.services.agent_run_service import CeleryTaskDispatcher
-from backend.app.services.invoice_processing import InvoiceProcessingService
+from backend.app.infrastructure.queue.celery_dispatcher import CeleryTaskDispatcher
 from backend.app.workers import app as worker_app
 from backend.app.workers.tasks import execute_agent_run
 
@@ -21,7 +21,7 @@ def test_dispatcher_sends_only_run_id(monkeypatch) -> None:
 
     monkeypatch.setattr(worker_app.celery_app, "send_task", fake_send_task)
 
-    CeleryTaskDispatcher().enqueue_execute(run_id=run_id)
+    CeleryTaskDispatcher(worker_app.celery_app).enqueue_execute(run_id=run_id)
 
     assert captured["kwargs"] == {"run_id": str(run_id)}
     assert "invoice_path" not in str(captured)
@@ -36,7 +36,7 @@ def test_worker_result_contains_only_identifier_status_and_error(
         llm_provider="offline",
         llm_model="deterministic-v1",
     )
-    processor = InvoiceProcessingService(settings)
+    processor = build_invoice_processor(settings)
     record, _ = processor.create_from_path(
         PROJECT_ROOT / "data/invoices/invoice_1001.txt",
         origin="api",

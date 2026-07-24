@@ -6,7 +6,7 @@ from pathlib import Path
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 BACKEND_SOURCE = PROJECT_ROOT / "backend" / "app"
 SQLITE_ALLOWLIST = {
-    BACKEND_SOURCE / "agents" / "graph_provider.py",
+    BACKEND_SOURCE / "infrastructure" / "graph" / "provider.py",
     BACKEND_SOURCE / "infrastructure" / "db" / "session.py",
 }
 

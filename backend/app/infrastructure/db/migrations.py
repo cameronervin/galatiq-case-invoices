@@ -2,8 +2,8 @@ from datetime import UTC, datetime
 
 from sqlalchemy.dialects.sqlite import insert
 
+from backend.app.infrastructure.db.models import Base, InventoryItem, SchemaMigration
 from backend.app.infrastructure.db.session import Database
-from backend.app.models import Base, InventoryItem, SchemaMigration
 
 INVENTORY_SEED = (
     {

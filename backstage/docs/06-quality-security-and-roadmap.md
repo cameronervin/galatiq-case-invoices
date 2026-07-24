@@ -2,19 +2,21 @@
 
 ## Verification strategy
 
-`make verify` regenerates the API contract, runs backend tests and lint, then runs
-frontend tests, lint, type checking, and a production build. The documented
-Valkey/Celery smoke test exercises real execute and review/resume delivery after
-the local suite.
+`make verify` checks generated API artifacts without rewriting them, runs backend
+branch coverage with an 85% floor and lint, then runs frontend tests, lint, type
+checking, and a production build. GitHub Actions runs the same target from frozen
+Python and pnpm lockfiles.
+The documented Valkey/Celery smoke test exercises real execute and review/resume
+delivery after the local suite.
 
 | Area | Evidence |
 | --- | --- |
 | Persistence | Repeatable metadata, constraints/FKs/indexes, seed idempotency, JSON round trips, session commit/rollback/close |
-| Concurrency | Same-profile creation and payment delivery cannot create duplicates |
+| Concurrency | Same-profile creation, execution claims, terminal transitions, and payment delivery are guarded |
 | Workflow | Every route, repair/revision bound, policy override, interrupt/resume, timeout, and replay path |
 | Providers | Offline fixtures and mocked Grok success, refusal, auth, timeout, retry, structured output, `store=False` |
 | Interfaces | CLI exit codes, API status/contracts, queue failure, review conflict/redispatch, JSON-safe Celery |
-| Frontend | Workspace states, polling, review confirmation, accessibility behavior, type contract, production build |
+| Frontend | Selection races, polling recovery, queue-error reconciliation, review redispatch, accessibility, type contract, production build |
 | Architecture | Static source guard rejects raw SQL escape hatches and repository `sqlite3` use |
 | Documentation | Required numbered files, headings, and relative links |
 
@@ -29,17 +31,18 @@ the local suite.
 ## Observability and sanitization
 
 Run events expose stage, status, stable code, safe message, duration, and time.
-Provider/tool/payment transitions are visible, including inventory invocation,
-bounded repairs/revisions, policy overrides, review, and payment. Public results,
+Provider/tool/payment transitions are visible, including separate validation,
+inventory, approval, and critic outcomes, bounded repairs/revisions, policy
+overrides, review, and payment. Public results,
 logs, events, and Celery values exclude local paths, raw documents, review text in
 queue data, prompts, provider payloads, credentials, vendor/item/amount logging,
 and hidden reasoning.
 
-Errors cross boundaries as stable codes and safe messages. A workflow exception
-marks the run failed, deletes its staged source, and preserves sanitized audit
-state. Missing Grok credentials fail explicitly. Queue failure never pretends a
-run is executing; review queue failure preserves the decision for idempotent
-redispatch.
+Errors cross boundaries as stable codes and safe messages. Setup and workflow
+exceptions mark the run failed, delete staged sources, and preserve sanitized
+audit state; persistence failures remove unowned staged uploads. Missing Grok
+credentials fail explicitly. Queue failure never pretends a run is executing;
+review queue failure preserves the decision for idempotent redispatch.
 
 ## Security posture
 

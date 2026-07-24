@@ -2,8 +2,15 @@
 
 ## SQLAlchemy model
 
-Application persistence uses SQLAlchemy 2.0 typed ORM models in
-`backend/app/models/persistence.py`. `Base.metadata.create_all()` repeatably
+Application persistence uses SQLAlchemy 2.0 typed ORM models under
+`backend/app/infrastructure/db/models/`. One shared declarative base owns a single
+metadata graph; catalog, run, result, event, and payment modules co-locate each
+table with its constraints and indexes. The package root is only a stable export
+surface. Repository contracts live in
+`backend/app/ports/repositories.py`, while the focused SQLAlchemy implementations
+live under `backend/app/infrastructure/db/repositories/`: inventory lookup,
+run lifecycle, result/review persistence, run queries, and payments are separate
+modules composed by the concrete run adapter. `Base.metadata.create_all()` repeatably
 creates six application tables; the seed uses the SQLite dialect's idempotent
 insert construct. There is no Alembic layer or first-party handwritten SQL.
 

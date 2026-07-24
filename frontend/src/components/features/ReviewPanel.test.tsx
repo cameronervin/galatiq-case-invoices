@@ -19,4 +19,16 @@ describe("ReviewPanel", () => {
     expect(window.confirm).toHaveBeenCalled();
     expect(onReview).toHaveBeenCalledWith("approve", "Reviewed the warning.");
   });
+
+  it("announces a pending review action", () => {
+    const { rerender } = render(<ReviewPanel pending={false} onReview={jest.fn()} />);
+
+    rerender(<ReviewPanel pending onReview={jest.fn()} />);
+
+    expect(screen.getByRole("region", { name: "Human review" })).toHaveAttribute(
+      "aria-busy",
+      "true"
+    );
+    expect(screen.getByRole("status")).toHaveTextContent("Recording review");
+  });
 });

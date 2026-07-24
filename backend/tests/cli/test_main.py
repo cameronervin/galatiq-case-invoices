@@ -153,7 +153,7 @@ def test_cli_maps_workflow_timeout_to_exit_six(
         def close(self) -> None:
             pass
 
-    monkeypatch.setattr(cli, "InvoiceProcessingService", TimeoutProcessor)
+    monkeypatch.setattr(cli, "build_invoice_processor", TimeoutProcessor)
 
     exit_code = cli.run(
         ["--invoice_path", str(PROJECT_ROOT / "data/invoices/invoice_1001.txt")],

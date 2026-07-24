@@ -1,6 +1,6 @@
 from typing import TypedDict
 
-from backend.app.infrastructure.llm.base import ApprovalProposal
+from backend.app.ports.providers import ApprovalProposal
 from backend.app.schemas.domain import (
     ApprovalRecommendation,
     HumanReview,

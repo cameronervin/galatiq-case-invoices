@@ -17,7 +17,9 @@ ingest -> extraction -> validation -> approval -> critic -> policy
    provider.
 2. The validation agent calls the registered read-only inventory lookup and adds
    deterministic integrity, normalization, stock, date, and reconciliation
-   findings. The invocation is recorded as an audit event.
+   findings. Loader evidence supplies bounded suspicious-language findings, so
+   validation never re-reads staged binary content. Start and successful lookup
+   events are recorded separately.
 3. The approval agent proposes a route and reason codes.
 4. The critic evaluates that proposal. One revision is allowed.
 5. Deterministic policy owns the final route and records an override when it
@@ -30,6 +32,13 @@ ingest -> extraction -> validation -> approval -> critic -> policy
 Graph state contains public workflow artifacts and loop counts, not the source
 path, provider credentials, prompts, raw provider payloads, or hidden reasoning.
 Runtime dependencies are supplied separately through `AgentRuntimeContext`.
+Graph nodes adapt those dependencies; deterministic policy and validation live in
+focused modules that can be tested without LangGraph or SQLite.
+The adapters are grouped by responsibility under `backend/app/agents/nodes`:
+extraction owns ingest and bounded repair, validation owns deterministic checks,
+approval owns critique and policy routing, review owns the durable interrupt, and
+payment owns terminal payment or rejection. Shared state preconditions and the
+workflow deadline are centralized in a small helper module.
 
 Extraction permits at most one repair, for two provider attempts total. Approval
 permits at most one revision after critique. The whole workflow has a 300-second
@@ -57,9 +66,12 @@ review before resuming from the graph checkpoint.
 ## Provider boundary
 
 The offline provider is deterministic and supports the full fixture demo without
-network access. Optional Grok mode uses Pydantic structured output, provider
-storage disabled, a 45-second request timeout, one adapter-level transient retry,
-and no provider-hosted tools. A requested Grok run never silently falls back.
+network access. Optional Grok mode uses one owned client per provider/model
+profile, Pydantic structured output, provider storage disabled, a 45-second
+request timeout, one adapter-level transient retry, and no provider-hosted tools.
+Static policy remains in trusted instructions; invoice content, repair feedback,
+and current extraction remain untrusted input data. A requested Grok run never
+silently falls back.
 
 ## Scope boundary
 

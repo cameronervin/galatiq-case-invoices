@@ -47,7 +47,9 @@ context. The overall workflow deadline is 300 seconds.
 
 ## SQLAlchemy and SQLite
 
-SQLAlchemy 2.0 typed ORM models define `schema_migrations` and five domain tables.
+Aggregate-focused SQLAlchemy 2.0 typed ORM modules under
+`backend/app/infrastructure/db/models/` define `schema_migrations` and five domain
+tables on one shared declarative base.
 `Base.metadata.create_all()` is repeatable, and SQLite dialect inserts seed
 inventory idempotently. There is no first-party handwritten SQL or Alembic layer.
 
@@ -61,25 +63,43 @@ inventory idempotently. There is no first-party handwritten SQL or Alembic layer
 
 Three repositories own persistence: inventory; runs/results/events; payments.
 Non-failed runs are unique by content hash, provider, and model. Failed content
-may create a new run. Staged files are deleted after every terminal outcome.
+may create a new run. Staged files are deleted after every terminal outcome, and
+an upload not durably owned by a run is removed when persistence fails.
 
-`InvoiceProcessingService` owns one `Database`. Its injected `SessionContext`
-opens a short-lived session per repository method, commits successful writes,
-rolls back exceptions, and always closes. Repositories never receive database
-paths, create engines, or retain sessions. The engine uses `NullPool`, a
+The composition root at `backend/app/bootstrap/invoice_runtime.py` owns one
+`Database` and injects its `SessionContext`
+into the repositories used by the focused invoice intake, execution, review,
+and query services behind `InvoiceProcessingService`. The API composition
+root also binds queue dispatch to `RunApplicationService`, keeping HTTP routes
+free of repository and Celery orchestration. Each repository method opens a
+short-lived session, commits successful writes, rolls back exceptions, and
+always closes. Repositories never receive database paths, create engines, or
+retain sessions. The engine uses `NullPool`, a
 five-second driver timeout, `IMMEDIATE` write locking, and Python's SQLite
 connection configuration API for foreign keys.
 
+Repository/provider/document/queue contracts live under `backend/app/ports`.
+Business validation and approval policies live under `backend/app/domain`.
+Validation rules are grouped under `domain.validation` by rule family:
+extraction feedback, finding construction and ordering, invoice integrity and
+reconciliation, and inventory normalization and stock checks.
+Concrete database, document, model-provider, graph-checkpoint, and queue adapters
+live under `backend/app/infrastructure`; services depend on ports rather than
+those concrete modules.
+
 LangGraph's `SqliteSaver` keeps its separately owned raw checkpoint connection;
-first-party graph code does not execute checkpoint SQL. Service cleanup closes
-that graph connection before disposing the SQLAlchemy engine and is safe twice.
+first-party graph code does not execute checkpoint SQL. Queued execution is
+atomically claimed once, and guarded transitions prevent a late writer from
+regressing terminal state. Service cleanup closes the graph, cached live-provider
+clients, and SQLAlchemy engine once.
 
 ## Extraction and Validation
 
 - JSON, CSV, and XML use deterministic loaders.
 - TXT and text-bearing PDF use the configured provider.
 - Encrypted, empty, image-only, and over-limit PDFs fail explicitly.
-- Missing values remain missing unless a documented normalization applies.
+- Missing values remain missing unless a documented normalization applies;
+  JSON/XML missing currency is blocking rather than inferred.
 - The supplied CSV dialect defaults missing currency to configured USD and emits
   `DEFAULT_CURRENCY_APPLIED` as `info`.
 - Exact aliases and parenthetical item descriptors emit
@@ -95,10 +115,20 @@ that graph connection before disposing the SQLAlchemy engine and is safe twice.
 and supports every supplied fixture. `grok` is the optional live provider and
 requires `XAI_API_KEY`; it never silently falls back.
 
-Grok uses the OpenAI SDK Responses API, strict Pydantic output, `store=False`, a
-45-second request timeout, one adapter-level transient retry, and SDK retries
-disabled. Provider-hosted tools are disabled. The runtime resolves the provider
-recorded on each run through a provider registry.
+Grok uses one cached client per provider/model profile, the OpenAI SDK Responses
+API, strict Pydantic output, `store=False`, a 45-second request timeout, one
+adapter-level transient retry, and SDK retries disabled. Provider-hosted tools are
+disabled. Static policy stays in trusted instructions; document and repair values
+are sent only as untrusted input. The runtime resolves the provider recorded on
+each run through an owned provider registry backed by named provider factories.
+Provider instances are cached per profile and any provider that exposes
+`close()` is released idempotently.
+
+Document ingestion lives under `infrastructure.documents`, with format-specific
+adapters behind an immutable suffix registry. Its loader facade keeps file limits
+and error contracts stable while JSON, CSV, XML, TXT, and PDF parsing remain
+independently testable. Deterministic approval routing remains business logic
+under `domain.policies`; it is not treated as a generic utility.
 
 ## Safety and Observability
 

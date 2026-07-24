@@ -1,21 +1,25 @@
 from dataclasses import dataclass
+from typing import Protocol
 
-from backend.app.agents.tools import ToolRegistry
-from backend.app.core.config import Settings
-from backend.app.infrastructure.llm.factory import ProviderRegistry
-from backend.app.repositories.sqlalchemy import (
-    InventoryRepository,
-    PaymentRepository,
-    RunRepository,
+from backend.app.ports.documents import DocumentLoader
+from backend.app.ports.providers import ProviderResolver
+from backend.app.ports.repositories import (
+    AgentRunRepository,
+    PaymentStore,
 )
+from backend.app.ports.runtime import InventoryLookup
+
+
+class RuntimeSettings(Protocol):
+    default_currency: str
 
 
 @dataclass(frozen=True)
 class AgentRuntimeContext:
-    settings: Settings
-    run_repository: RunRepository
-    inventory_repository: InventoryRepository
-    payment_repository: PaymentRepository
-    provider_registry: ProviderRegistry
-    tool_registry: ToolRegistry
+    settings: RuntimeSettings
+    run_repository: AgentRunRepository
+    payment_repository: PaymentStore
+    provider_registry: ProviderResolver
+    inventory_lookup: InventoryLookup
+    document_loader: DocumentLoader
     deadline_monotonic: float
