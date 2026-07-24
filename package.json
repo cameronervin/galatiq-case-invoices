@@ -1,0 +1,17 @@
+{
+  "name": "invoice-processing",
+  "version": "0.1.0",
+  "private": true,
+  "scripts": {
+    "dev:backend": "uv run uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000",
+    "dev:frontend": "pnpm --dir frontend dev",
+    "dev:worker": "uv run celery -A backend.app.workers.app:celery_app worker --loglevel=info",
+    "lint:backend": "uv run ruff check .",
+    "lint:frontend": "pnpm --dir frontend lint",
+    "test:backend": "uv run pytest -v",
+    "test:frontend": "pnpm --dir frontend test",
+    "typecheck:frontend": "pnpm --dir frontend typecheck"
+  },
+  "packageManager": "pnpm@10.33.3"
+}
+

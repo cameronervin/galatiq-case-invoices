@@ -99,10 +99,39 @@ response = client.chat.completions.create(
 The system should be executable from the command line:
 
 ```bash
-python main.py --invoice_path=data/invoices/invoice1.txt
+python main.py --invoice_path=data/invoices/invoice_1001.txt
 ```
 
 Output should include structured logs and results.
+
+## Project Scaffold
+
+This repository includes a runnable foundation for the implementation:
+
+- FastAPI and typed LangGraph backend boundaries
+- Celery worker with a local Valkey broker
+- Next.js workspace with strict TypeScript and tests
+- A first-class root CLI that queues invoice-processing runs
+
+Install the Python and frontend dependencies:
+
+```bash
+uv sync
+pnpm install
+```
+
+Start the broker and worker in separate terminals before submitting an invoice:
+
+```bash
+make broker-up
+make dev-worker
+uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
+```
+
+The current worker returns an explicit `scaffolded` result. Extraction,
+validation, approval, payment, inventory tables, and live LLM behavior remain for
+the product implementation. See `backstage/guides/setup.md` for all development
+commands.
 
 ## Evaluation Criteria
 
