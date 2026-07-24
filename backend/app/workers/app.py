@@ -1,24 +1,12 @@
-import asyncio
-from collections.abc import Coroutine
 from importlib import import_module
-from typing import Any
 
 import structlog
 from celery import Celery
-from celery.signals import (
-    worker_process_init,
-    worker_process_shutdown,
-    worker_ready,
-    worker_shutdown,
-)
+from celery.signals import worker_process_init, worker_process_shutdown
 
-from backend.app.agents.graph_provider import (
-    GraphProvider,
-    clear_graph_provider_cache,
-    get_graph_provider,
-)
 from backend.app.core.config import get_settings
 from backend.app.core.logging import configure_logging
+from backend.app.services.invoice_processing import InvoiceProcessingService
 
 settings = get_settings()
 configure_logging(settings.log_level)
@@ -36,40 +24,45 @@ celery_app.conf.update(
     result_serializer="json",
     task_serializer="json",
     timezone="UTC",
+    worker_concurrency=1,
 )
 
-REQUIRED_TASKS = {"invoice_processing.agent_runs.execute"}
-_worker_graph_provider: GraphProvider | None = None
-
-
-def run_async(coroutine: Coroutine[Any, Any, dict[str, Any]]) -> dict[str, Any]:
-    return asyncio.run(coroutine)
+REQUIRED_TASKS = {
+    "invoice_processing.agent_runs.execute",
+    "invoice_processing.agent_runs.resume",
+}
+_worker_processor: InvoiceProcessingService | None = None
 
 
 @worker_process_init.connect
-@worker_ready.connect
 def init_worker_resources(**_: object) -> None:
-    global _worker_graph_provider
-    if _worker_graph_provider is not None:
-        logger.debug("worker_resources_already_initialized")
-        return
-    _worker_graph_provider = get_graph_provider()
-    _worker_graph_provider.invoice_graph()
-    logger.info("worker_resources_initialized")
+    global _worker_processor
+    if _worker_processor is None:
+        _worker_processor = InvoiceProcessingService(get_settings())
+        logger.info("worker_resources_initialized")
 
 
 @worker_process_shutdown.connect
-@worker_shutdown.connect
 def teardown_worker_resources(**_: object) -> None:
-    global _worker_graph_provider
-    was_initialized = _worker_graph_provider is not None
-    _worker_graph_provider = None
-    clear_graph_provider_cache()
-    logger.info("worker_resources_released", was_initialized=was_initialized)
+    global _worker_processor
+    if _worker_processor is not None:
+        _worker_processor.close()
+        _worker_processor = None
+    logger.info("worker_resources_released")
 
 
-def get_worker_graph_provider() -> GraphProvider | None:
-    return _worker_graph_provider
+def set_worker_processor(processor: InvoiceProcessingService | None) -> None:
+    global _worker_processor
+    if _worker_processor is not None and _worker_processor is not processor:
+        _worker_processor.close()
+    _worker_processor = processor
+
+
+def get_worker_processor() -> InvoiceProcessingService:
+    if _worker_processor is None:
+        init_worker_resources()
+    assert _worker_processor is not None
+    return _worker_processor
 
 
 def registered_tasks() -> set[str]:
@@ -80,15 +73,4 @@ def registered_tasks() -> set[str]:
     }
 
 
-def assert_required_tasks_registered() -> None:
-    missing = REQUIRED_TASKS - registered_tasks()
-    if missing:
-        raise RuntimeError(
-            "Celery worker task registry is missing tasks: "
-            + ", ".join(sorted(missing))
-        )
-
-
 import_module("backend.app.workers.tasks")
-assert_required_tasks_registered()
-

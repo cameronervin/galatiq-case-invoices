@@ -1,30 +1,31 @@
-import pytest
+from pathlib import Path
 
-from backend.app.agents.executors import AgentPipelineExecutor
 from backend.app.agents.graph_provider import GraphProvider
 
 
-def test_graph_provider_reuses_compiled_graph() -> None:
-    provider = GraphProvider()
+def test_graph_provider_reuses_compiled_graph(tmp_path: Path) -> None:
+    provider = GraphProvider(tmp_path / "app.db")
 
-    assert provider.invoice_graph() is provider.invoice_graph()
+    try:
+        graph = provider.invoice_graph()
+
+        assert graph is provider.invoice_graph()
+    finally:
+        provider.close()
 
 
-@pytest.mark.asyncio
-async def test_executor_returns_explicit_placeholder_state() -> None:
-    state = await AgentPipelineExecutor().execute(
-        {
-            "run_id": "run-1",
-            "invoice_path": "/tmp/invoice.txt",
-            "status": "running",
-            "current_stage": "scaffold",
-            "messages": [],
-            "errors": [],
-        }
-    )
+def test_graph_exposes_the_take_home_agent_roles(tmp_path: Path) -> None:
+    provider = GraphProvider(tmp_path / "app.db")
 
-    assert state["run_id"] == "run-1"
-    assert state["status"] == "scaffolded"
-    assert state["current_stage"] == "not_implemented"
-    assert state["messages"] == ["invoice pipeline is not implemented"]
+    try:
+        node_names = set(provider.invoice_graph().get_graph().nodes)
+    finally:
+        provider.close()
 
+    assert {
+        "extraction_agent",
+        "validation_agent",
+        "approval_agent",
+        "critic_agent",
+        "payment_agent",
+    } <= node_names

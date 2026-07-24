@@ -29,4 +29,3 @@ def test_cors_preflight_uses_configured_frontend_origin() -> None:
 
     assert response.status_code == 200
     assert response.headers["access-control-allow-origin"] == "http://localhost:3100"
-

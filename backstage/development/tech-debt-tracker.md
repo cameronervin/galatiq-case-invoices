@@ -1,9 +1,11 @@
 # Technical-Debt Tracker
 
-Track intentionally deferred work here.
+The take-home implementation intentionally defers the following production work:
 
-- Replace the unconfigured LLM provider with a tested adapter.
-- Define the SQLite inventory and agent-run schemas before persistence is used.
-- Replace the placeholder LangGraph node with the bounded invoice workflow.
-- Add an upload and run-status contract before wiring the frontend to execution.
+- Authentication, authorization, tenant isolation, and audit-log export.
+- Durable object storage, malware scanning, OCR service integration, and retention policy.
+- Live inventory/pricing/vendor systems, FX conversion, and inventory mutation.
+- A real banking integration, payment reconciliation, and human maker/checker controls.
+- Horizontal worker scaling and database/server upgrades beyond local SQLite.
 
+These are out of V1 scope rather than hidden prerequisites for the local demo.

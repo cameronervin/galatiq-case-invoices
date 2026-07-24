@@ -1,6 +1,6 @@
 COMPOSE = docker compose -f deploy/compose/local.yml
 
-.PHONY: broker-up broker-down broker-logs dev-backend dev-frontend dev-worker test-backend lint-backend test-frontend lint-frontend typecheck-frontend build-frontend verify
+.PHONY: broker-up broker-down broker-logs dev-backend dev-frontend dev-worker generate-api-types test-backend lint-backend test-frontend lint-frontend typecheck-frontend build-frontend verify
 
 broker-up:
 	$(COMPOSE) up -d valkey
@@ -18,7 +18,11 @@ dev-frontend:
 	pnpm --dir frontend dev
 
 dev-worker:
-	uv run celery -A backend.app.workers.app:celery_app worker --loglevel=info
+	uv run celery -A backend.app.workers.app:celery_app worker --loglevel=info --concurrency=1
+
+generate-api-types:
+	uv run python -m scripts.export_openapi
+	pnpm --dir frontend exec openapi-typescript openapi.json -o src/types/generated-api.ts
 
 test-backend:
 	uv run pytest -v
@@ -38,4 +42,4 @@ typecheck-frontend:
 build-frontend:
 	pnpm --dir frontend build
 
-verify: test-backend lint-backend test-frontend lint-frontend typecheck-frontend build-frontend
+verify: generate-api-types test-backend lint-backend test-frontend lint-frontend typecheck-frontend build-frontend

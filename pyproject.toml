@@ -5,10 +5,16 @@ description = "A multi-agent invoice processing prototype."
 requires-python = ">=3.12"
 dependencies = [
     "celery[redis]>=5.5.0,<6.0.0",
+    "defusedxml>=0.7.1,<1.0.0",
     "fastapi>=0.128.0,<1.0.0",
     "langgraph>=1.0.8,<2.0.0",
+    "langgraph-checkpoint-sqlite>=3.0.0,<4.0.0",
+    "openai>=2.11.0,<3.0.0",
     "pydantic>=2.12.0,<3.0.0",
     "pydantic-settings>=2.7.0,<3.0.0",
+    "pymupdf>=1.26.0,<2.0.0",
+    "python-multipart>=0.0.20,<1.0.0",
+    "sqlalchemy>=2.0,<3.0",
     "structlog>=24.4.0,<26.0.0",
     "uvicorn[standard]>=0.32.0,<1.0.0",
 ]

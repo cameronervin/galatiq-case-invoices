@@ -23,4 +23,3 @@ MODULES = [
 @pytest.mark.parametrize("module_name", MODULES)
 def test_backend_module_imports(module_name: str) -> None:
     assert importlib.import_module(module_name) is not None
-

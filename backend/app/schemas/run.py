@@ -1,13 +1,19 @@
-from pathlib import Path
-from typing import Literal
-from uuid import UUID
+from backend.app.schemas.domain import (
+    ErrorEnvelope,
+    ReviewRequest,
+    RunCreationResponse,
+    RunDetail,
+    RunListResponse,
+    RunSummary,
+    WorkerResult,
+)
 
-from pydantic import BaseModel
-
-
-class QueuedAgentRun(BaseModel):
-    run_id: UUID
-    task_id: str
-    invoice_path: Path
-    status: Literal["queued"] = "queued"
-
+__all__ = [
+    "ErrorEnvelope",
+    "ReviewRequest",
+    "RunCreationResponse",
+    "RunDetail",
+    "RunListResponse",
+    "RunSummary",
+    "WorkerResult",
+]

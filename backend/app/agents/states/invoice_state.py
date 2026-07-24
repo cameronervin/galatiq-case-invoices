@@ -1,11 +1,28 @@
-from typing import NotRequired, TypedDict
+from typing import TypedDict
+
+from backend.app.infrastructure.llm.base import ApprovalProposal
+from backend.app.schemas.domain import (
+    ApprovalRecommendation,
+    HumanReview,
+    InvoiceData,
+    PaymentResult,
+    RunStage,
+    RunStatus,
+    ValidationFinding,
+    WorkflowError,
+)
 
 
-class InvoiceProcessingState(TypedDict):
+class InvoiceProcessingState(TypedDict, total=False):
     run_id: str
-    invoice_path: str
-    status: str
-    current_stage: str
-    messages: NotRequired[list[str]]
-    errors: NotRequired[list[str]]
-
+    status: RunStatus
+    stage: RunStage
+    invoice: InvoiceData | None
+    findings: list[ValidationFinding]
+    proposal: ApprovalProposal | None
+    recommendation: ApprovalRecommendation | None
+    review: HumanReview | None
+    payment: PaymentResult | None
+    extraction_attempts: int
+    reflection_count: int
+    error: WorkflowError | None

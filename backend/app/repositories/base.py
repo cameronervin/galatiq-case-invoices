@@ -1,11 +1,18 @@
 from typing import Protocol
 from uuid import UUID
 
+from backend.app.schemas.domain import Money, PaymentResult, RunDetail
+
 
 class AgentRunRepository(Protocol):
-    """Persistence boundary for future agent-run state."""
+    def get_detail(self, run_id: UUID | str) -> RunDetail | None: ...
 
-    async def save_status(self, run_id: UUID, status: str) -> None: ...
 
-    async def get_status(self, run_id: UUID) -> str | None: ...
+class InventoryLookupRepository(Protocol):
+    def resolve_item(self, source_name: str) -> tuple[str, int, bool] | None: ...
 
+
+class PaymentStore(Protocol):
+    def create_or_get(
+        self, run_id: UUID | str, money: Money, idempotency_key: str
+    ) -> PaymentResult: ...

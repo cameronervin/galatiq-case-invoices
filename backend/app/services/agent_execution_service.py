@@ -1,20 +1,16 @@
-from backend.app.agents.executors import AgentPipelineExecutor
-from backend.app.agents.states import InvoiceProcessingState
+from uuid import UUID
+
+from backend.app.core.config import Settings
+from backend.app.schemas.domain import RunDetail
+from backend.app.services.invoice_processing import InvoiceProcessingService
 
 
 class AgentExecutionService:
-    def __init__(self, executor: AgentPipelineExecutor | None = None) -> None:
-        self.executor = executor or AgentPipelineExecutor()
+    def __init__(self, settings: Settings) -> None:
+        self.processor = InvoiceProcessingService(settings)
 
-    async def execute(
-        self, *, run_id: str, invoice_path: str
-    ) -> InvoiceProcessingState:
-        initial_state = InvoiceProcessingState(
-            run_id=run_id,
-            invoice_path=invoice_path,
-            status="running",
-            current_stage="scaffold",
-            messages=[],
-            errors=[],
-        )
-        return await self.executor.execute(initial_state)
+    def execute(self, *, run_id: UUID | str) -> RunDetail:
+        return self.processor.process_run(run_id)
+
+    def resume(self, *, run_id: UUID | str) -> RunDetail:
+        return self.processor.resume_run(run_id)

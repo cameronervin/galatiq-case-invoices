@@ -2,129 +2,92 @@
 
 ## Purpose
 
-This is the first structured product harness for the Galatiq invoice-processing
-case study. It specifies the product to be built on top of the existing scaffold;
-it does not describe implemented business behavior.
+Build a local-first invoice-processing prototype that demonstrates extraction,
+deterministic validation, bounded agent critique, human review, and idempotent
+mock payment. This PRD defines intended behavior; implemented behavior is
+described by the root README and developer guides.
 
-The product is a local-first accounts-payable workspace that accepts invoice
-documents, extracts structured data, validates them against mock inventory,
-routes them through bounded LangGraph approval logic, and records either a mock
-payment or an explainable rejection.
+## README Requirements
+
+- Process the supplied PDF, TXT, JSON, CSV, and XML fixtures.
+- Validate invoice items against local SQLite inventory.
+- Apply the $10,000 approval threshold and explain rejection.
+- Demonstrate structured output, local tool use, and a bounded critique loop.
+- Provide the required CLI command and structured results.
+- Keep external inventory and payment behavior local and simulated.
+
+## Implementation Defaults
+
+- The required CLI executes synchronously without Valkey.
+- Offline deterministic inference is the default; Grok is an optional live mode.
+- FastAPI, Celery, and Next.js provide an optional asynchronous workspace.
+- SQLite stores typed JSON workflow artifacts rather than independently queryable
+  invoice, finding, and decision tables.
+- SQLAlchemy 2.0 typed ORM models own application persistence. Repositories receive
+  a context-managed session callable and contain no handwritten SQL.
+- Blocking findings reject; warnings, non-USD, and totals above $10,000 require
+  review; informational findings do not alter routing.
+- Exact duplicates reuse a non-failed run only within the same provider/model
+  profile. Changed content, provider/model changes, and resubmission after failure
+  create new runs.
 
 ## Users
 
-- **Accounts-payable processor:** submits invoices and monitors processing.
-- **VP reviewer:** resolves high-value, warning, and non-USD exceptions.
-- **Local operator/developer:** configures the model provider and runs the local
-  API, worker, CLI, and frontend.
-- **Case-study evaluator:** verifies correctness, safety, agentic behavior, and
-  usability using the supplied fixtures.
-
-## Goals
-
-- Process PDF, TXT, JSON, CSV, and XML invoices through an observable workflow.
-- Complete clean USD invoices at or below $10,000 with an idempotent mock payment.
-- Reject blocking validation failures before payment.
-- Pause high-value, warning, and non-USD cases for an auditable human decision.
-- Make exact duplicates idempotent while treating changed revisions as new runs.
-- Keep model providers replaceable and require Grok for CLI-created runs.
-- Preserve missing and uncertain data rather than inventing values.
-
-## Non-Goals
-
-- Production authentication or authorization.
-- Live email ingestion, inventory services, banking, or payment settlement.
-- Currency conversion or exchange-rate lookup.
-- Cloud deployment or additional persistent services.
-- Image-only PDF OCR.
-- Inventory reservation or stock decrement after payment.
+- Accounts-payable processor: submits and inspects invoices.
+- VP reviewer: approves or rejects exceptions.
+- Evaluator/operator: runs the local demo and verifies behavior.
 
 ## Success Criteria
 
-- The documented CLI command processes a clean fixture end to end using Grok.
-- API and workspace users can submit, track, review, retry, and inspect runs.
-- All supplied fixtures produce the outcomes in the acceptance matrix.
-- Graph retries, resumes, and duplicate worker delivery cannot pay twice.
-- Logs and public responses contain no secrets, raw provider payloads, raw
-  invoice contents, or local filesystem paths.
-- The full repository verification and asynchronous worker smoke test pass.
-
-## Locked Product Decisions
-
-| Decision | Direction | Source |
-| --- | --- | --- |
-| Delivery surface | CLI, FastAPI, Celery worker, and Next.js workspace | Product owner |
-| Orchestration | Typed LangGraph workflow with bounded repair/reflection loops | Product owner and README |
-| Approval policy | Clean USD `<= $10,000` auto-pays; high-value, warnings, and non-USD require review; blockers reject | Product owner |
-| CLI provider | Grok only; missing `XAI_API_KEY` is a configuration error | Product owner |
-| Development provider | OpenAI adapter behind the same provider contract | Product owner |
-| Duplicate policy | Exact content reuses the existing run; changed content creates a new run | Product owner |
-| Foreign currency | Preserve original currency and require review; never invent FX | Product owner |
-| Human review surface | API and workspace; CLI reports `review_required` with the run ID | Product owner |
-| Priority | End-to-end correctness before extra agentic or visual polish | Product owner |
-| Deadline | No hard deadline | Product owner |
-
-## Documentation Map
-
-### User stories
-
-- [Master user stories](01-user-stories/_master-user-stories.md)
-- [Submission and tracking](01-user-stories/epic-1-submission-and-tracking.md)
-- [Extraction and validation](01-user-stories/epic-2-extraction-and-validation.md)
-- [Approval and payment](01-user-stories/epic-3-approval-and-payment.md)
-- [Operations and workspace](01-user-stories/epic-4-operations-and-workspace.md)
-
-### Technical specifications
-
-- [Data model](02-technical-docs/data-model.md)
-- [API specification](02-technical-docs/api-specification.md)
-- [Agentic framework](02-technical-docs/agentic-framework.md)
-- [Integration specification](02-technical-docs/integration-specification.md)
-- [Security and observability](02-technical-docs/security-and-observability.md)
-- [Workspace UX](02-technical-docs/workspace-ux.md)
-
-### Implementation
-
-- [Master implementation plan](03-implementation/_implementation-plan.md)
-- Phase 1: contracts and persistence
-- Phase 2: ingestion and providers
-- Phase 3: validation and workflow
-- Phase 4: API, worker, and CLI
-- Phase 5: workspace and readiness
-
-## Phase Workflow
-
-Each phase file contains tasks with status, goal, user-story references,
-assertion-chain validation, and linked PRD documents. Tasks are ordered by
-dependency and sized for one coding-agent thread. Mark tasks with:
-
-- `☐` — not started
-- `◐` — partial; state what remains in the goal
-- `☑` — complete, reviewed, tested, and committed
-
-When implementation differs from a task, record **Planned**, **Actual**,
-**Reason**, and **Impact on later phases** in the matching deviations file.
-Reconcile the specifications at phase boundaries before starting the next phase.
+- `python main.py --invoice_path=data/invoices/invoice_1001.txt` completes offline
+  without Valkey or a network connection.
+- Every supplied fixture matches the acceptance matrix.
+- The workflow exposes extraction, inventory-tool validation, approval, critique,
+  policy, review, rejection, and mock-payment events.
+- Duplicate worker delivery cannot create a second payment.
+- API, CLI, logs, Celery, and UI expose no local paths, raw invoice content,
+  prompts, provider payloads, keys, or hidden reasoning.
+- `make verify` and the documented asynchronous worker smoke test pass.
 
 ## Fixture Acceptance Matrix
 
-| Expected outcome | Invoices | Reason |
+| Outcome | Invoices | Reason |
 | --- | --- | --- |
-| Automatic mock payment | INV-1001, INV-1004, revised INV-1004, INV-1006, INV-1010, INV-1011, INV-1015 | Clean, supported USD invoices within stock and threshold |
-| Human review | INV-1012 | OCR-like normalization warnings |
-| Human review | INV-1014 | EUR is preserved but unsupported for automatic payment |
-| Rejection | INV-1002, INV-1005, INV-1007, INV-1013 | Aggregated quantities exceed stock; INV-1013 also has a total discrepancy |
-| Rejection | INV-1003 | Zero-stock item, invalid relative due date, and suspicious urgency language |
+| Automatic mock payment | INV-1001, INV-1004, revised INV-1004, INV-1006, INV-1010, INV-1011, INV-1015 | Valid inventory and totals; clean USD at or below threshold |
+| Human review | INV-1012 | OCR-like corrections are visible warnings |
+| Human review | INV-1014 | EUR is preserved and requires review |
+| Rejection | INV-1002, INV-1005, INV-1007, INV-1013 | Aggregated quantity exceeds stock; INV-1013 also has a total mismatch |
+| Rejection | INV-1003 | Zero stock, invalid relative date, and suspicious payment language |
 | Rejection | INV-1008, INV-1016 | Unknown inventory items |
-| Rejection | INV-1009 | Missing required fields, negative quantity, and invalid amount |
+| Rejection | INV-1009 | Missing fields, negative quantity, and invalid amount |
 
-## Assumptions
+## Normalization Provenance
 
-- Supplied fixtures are immutable and contain mock data only.
-- PDFs are text-bearing; image OCR is deferred.
-- Due dates are validated relative to invoice dates, not the current system date.
-- The inventory table is reference data and is never decremented by this workflow.
-- Valkey is queue infrastructure only; SQLite is the application source of truth.
-- Raw documents may be staged locally for processing and retry, but are never
-  stored in graph state, logs, or public API responses.
+- The supplied CSV dialect has configured default currency USD. Applying it emits
+  `DEFAULT_CURRENCY_APPLIED` with `info` severity.
+- Exact aliases, including parenthetical item descriptions, emit
+  `ITEM_ALIAS_NORMALIZATION` with `info` severity.
+- Evidence-backed OCR corrections emit `OCR_NORMALIZATION` with `warning`
+  severity and require review.
+- No other missing invoice value is guessed.
 
+## Business Demonstration
+
+The demo reports straight-through fixture outcomes, exceptions needing human
+attention, elapsed processing time, stable reason codes, and the invariant that
+each run records at most one simulated payment.
+
+## Documentation Map
+
+- [Canonical user stories](01-user-stories/_master-user-stories.md)
+- [Technical design](02-technical-docs/technical-design.md)
+- [API specification](02-technical-docs/api-specification.md)
+- [Workspace UX](02-technical-docs/workspace-ux.md)
+- [Implementation plan](03-implementation/_implementation-plan.md)
+
+## Assumptions and Non-Goals
+
+Fixtures are immutable and contain mock data. PDFs are text-bearing. Inventory is
+reference data and is not decremented. No retry endpoint, retained-source retry,
+OpenAI adapter, authentication, cloud deployment, OCR service, live payment,
+live inventory, or FX conversion is included.

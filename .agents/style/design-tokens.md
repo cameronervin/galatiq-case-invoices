@@ -4,12 +4,17 @@ Source of truth: `frontend/src/app/globals.css`.
 
 | Token | Current value | Use |
 | --- | --- | --- |
-| `--background` | `#f5f6f8` | Workspace background |
-| `--surface` | `#ffffff` | Cards and panels |
-| `--text` | `#18212f` | Primary text |
-| `--muted` | `#667085` | Supporting text |
-| `--border` | `#d9dee7` | Dividers and controls |
-| `--accent` | `#315efb` | Focus and primary actions |
+| `--canvas` | `#f2f3ef` | Workspace background |
+| `--surface` | `#fffef9` | Primary panels |
+| `--ink` | `#17211d` | Primary text |
+| `--muted` | `#637069` | Supporting text |
+| `--line` | `#d7dcd5` | Dividers and controls |
+| `--forest` | `#174e3b` | Focused brand/action color |
+| `--mint` | `#dcefe4` | Completed and successful state |
+| `--amber-soft` | `#fff0d4` | Review-required state |
+| `--red-soft` | `#fbe5e2` | Rejected and failed state |
+| `--blue-soft` | `#e2eef6` | Queued and running state |
 
-Prefer CSS variables, readable system typography, modest radii, and restrained motion. Add semantic success, warning, danger, and workflow-state tokens only when corresponding UI behavior is implemented. Avoid arbitrary colors, decorative effects, or third-party branding.
-
+Use semantic state tokens with text labels, visible focus, readable system/body
+typography, restrained motion, and modest radii. Preserve the editorial heading
+type only for the workspace title; operational data remains plain and compact.

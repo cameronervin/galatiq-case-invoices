@@ -1,4 +1,4 @@
-from backend.app.infrastructure.db.session import sqlite_connection
+from backend.app.infrastructure.db.session import Database, SessionContext
+from backend.app.models import Base
 
-__all__ = ["sqlite_connection"]
-
+__all__ = ["Base", "Database", "SessionContext"]

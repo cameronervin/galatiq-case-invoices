@@ -20,4 +20,3 @@ def test_cors_origins_include_localhost_variants() -> None:
         "http://localhost:3100",
         "http://127.0.0.1:3000",
     ]
-

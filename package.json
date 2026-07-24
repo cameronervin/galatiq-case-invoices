@@ -5,7 +5,7 @@
   "scripts": {
     "dev:backend": "uv run uvicorn backend.app.main:app --reload --host 127.0.0.1 --port 8000",
     "dev:frontend": "pnpm --dir frontend dev",
-    "dev:worker": "uv run celery -A backend.app.workers.app:celery_app worker --loglevel=info",
+    "dev:worker": "uv run celery -A backend.app.workers.app:celery_app worker --loglevel=info --concurrency=1",
     "lint:backend": "uv run ruff check .",
     "lint:frontend": "pnpm --dir frontend lint",
     "test:backend": "uv run pytest -v",
@@ -14,4 +14,3 @@
   },
   "packageManager": "pnpm@10.33.3"
 }
-

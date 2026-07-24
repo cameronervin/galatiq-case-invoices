@@ -1,87 +1,74 @@
-"""Command-line entrypoint for submitting invoice-processing runs."""
+"""Synchronous local CLI for invoice processing."""
 
 from __future__ import annotations
 
 import argparse
-import json
 import sys
 from collections.abc import Sequence
 from pathlib import Path
 
-from pydantic import ValidationError
-
-from backend.app.core.config import get_settings
-from backend.app.services.agent_run_service import (
-    AgentRunDispatchError,
-    AgentRunDispatchService,
+from backend.app.core.config import Settings, get_settings
+from backend.app.infrastructure.llm.factory import ProviderConfigurationError
+from backend.app.schemas.domain import ErrorBody, ErrorEnvelope, RunStatus
+from backend.app.services.invoice_processing import (
+    InvalidInvoiceInput,
+    InvoiceProcessingService,
 )
 
-SUPPORTED_INVOICE_SUFFIXES = {".csv", ".json", ".pdf", ".txt", ".xml"}
 EXIT_INVALID_INPUT = 2
 EXIT_CONFIGURATION_ERROR = 3
-EXIT_DISPATCH_ERROR = 4
+EXIT_WORKFLOW_FAILED = 5
+EXIT_TIMEOUT = 6
 
 
 def build_parser() -> argparse.ArgumentParser:
-    parser = argparse.ArgumentParser(
-        description="Queue an invoice for asynchronous agent processing."
-    )
-    parser.add_argument(
-        "--invoice_path",
-        required=True,
-        type=Path,
-        help="Path to a PDF, text, JSON, CSV, or XML invoice.",
-    )
+    parser = argparse.ArgumentParser(description="Process a local invoice.")
+    parser.add_argument("--invoice_path", required=True, type=Path)
+    parser.add_argument("--timeout-seconds", type=int, default=300)
     return parser
-
-
-def validate_invoice_path(path: Path) -> Path:
-    resolved_path = path.expanduser().resolve()
-    if not resolved_path.is_file():
-        raise ValueError(f"Invoice file does not exist: {path}")
-    if resolved_path.suffix.lower() not in SUPPORTED_INVOICE_SUFFIXES:
-        supported = ", ".join(sorted(SUPPORTED_INVOICE_SUFFIXES))
-        raise ValueError(
-            f"Unsupported invoice type '{resolved_path.suffix or '<none>'}'. "
-            f"Supported types: {supported}"
-        )
-    return resolved_path
 
 
 def run(
     argv: Sequence[str] | None = None,
     *,
-    dispatch_service: AgentRunDispatchService | None = None,
+    settings: Settings | None = None,
 ) -> int:
     parser = build_parser()
-    args = parser.parse_args(argv)
-
     try:
-        invoice_path = validate_invoice_path(args.invoice_path)
-    except ValueError as exc:
-        _print_error("invalid_input", str(exc))
+        args = parser.parse_args(argv)
+    except SystemExit as exc:
+        return int(exc.code)
+    if args.timeout_seconds <= 0:
+        _print_error("INVALID_INPUT", "Timeout must be a positive integer.")
         return EXIT_INVALID_INPUT
-
+    processor: InvoiceProcessingService | None = None
     try:
-        settings = get_settings()
-    except ValidationError as exc:
-        _print_error("configuration_error", str(exc))
+        processor = InvoiceProcessingService(settings or get_settings())
+        detail = processor.process_path(
+            args.invoice_path,
+            origin="cli",
+            timeout_seconds=args.timeout_seconds,
+        )
+    except InvalidInvoiceInput as exc:
+        _print_error("INVALID_INPUT", str(exc))
+        return EXIT_INVALID_INPUT
+    except ProviderConfigurationError as exc:
+        _print_error("PROVIDER_NOT_CONFIGURED", str(exc))
         return EXIT_CONFIGURATION_ERROR
-
-    service = dispatch_service or AgentRunDispatchService(settings=settings)
-    try:
-        queued_run = service.enqueue(invoice_path)
-    except AgentRunDispatchError as exc:
-        _print_error("dispatch_error", str(exc))
-        return EXIT_DISPATCH_ERROR
-
-    print(json.dumps(queued_run.model_dump(mode="json"), sort_keys=True))
-    return 0
+    finally:
+        if processor is not None:
+            processor.close()
+    print(detail.model_dump_json())
+    if detail.status != RunStatus.FAILED:
+        return 0
+    if detail.error and detail.error.code == "WORKFLOW_TIMEOUT":
+        return EXIT_TIMEOUT
+    return EXIT_WORKFLOW_FAILED
 
 
 def _print_error(code: str, message: str) -> None:
-    payload = json.dumps({"error": code, "message": message}, sort_keys=True)
-    print(payload, file=sys.stderr)
+    envelope = ErrorEnvelope(error=ErrorBody(code=code, message=message))
+    print(envelope.model_dump_json(), file=sys.stderr)
 
 
 def main() -> None:

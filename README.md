@@ -104,34 +104,70 @@ python main.py --invoice_path=data/invoices/invoice_1001.txt
 
 Output should include structured logs and results.
 
-## Project Scaffold
+## Implemented Solution
 
-This repository includes a runnable foundation for the implementation:
-
-- FastAPI and typed LangGraph backend boundaries
-- Celery worker with a local Valkey broker
-- Next.js workspace with strict TypeScript and tests
-- A first-class root CLI that queues invoice-processing runs
-
-Install the Python and frontend dependencies:
+The primary demo is deliberately broker-free: one command initializes SQLite,
+processes an invoice synchronously through LangGraph, and prints one safe JSON
+`RunDetail`. The deterministic offline provider is the default, so the evaluator
+does not need a key, network connection, Valkey, or a web server.
 
 ```bash
 uv sync
-pnpm install
-```
-
-Start the broker and worker in separate terminals before submitting an invoice:
-
-```bash
-make broker-up
-make dev-worker
 uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
 ```
 
-The current worker returns an explicit `scaffolded` result. Extraction,
-validation, approval, payment, inventory tables, and live LLM behavior remain for
-the product implementation. See `backstage/guides/setup.md` for all development
-commands.
+The graph exposes five roles: extraction, inventory-backed validation, approval,
+critic, and deterministic mock payment. It uses structured artifacts, a bounded
+repair/reflection loop, append-only audit events, exact decimal money, and one
+idempotent payment per run. A requested Grok configuration never silently falls
+back to offline mode.
+
+For an optional live Grok demonstration:
+
+```bash
+APP_LLM_PROVIDER=grok APP_LLM_MODEL=grok-4.5 XAI_API_KEY=your_key \
+  uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
+```
+
+The FastAPI, Celery, Valkey, and Next.js workspace are an above-and-beyond
+asynchronous surface. Start each process in its own terminal:
+
+```bash
+pnpm install
+make broker-up
+make dev-worker
+make dev-backend
+make dev-frontend
+```
+
+Open `http://localhost:3000` to upload an invoice, inspect findings and the agent
+timeline, and approve or reject human-review cases. Valkey carries only run IDs
+and small task results; SQLite remains the source of truth.
+
+### Supplied-fixture outcomes
+
+| Route | Fixtures | Why |
+|---|---|---|
+| Automatic mock payment | INV-1001, INV-1004, revised INV-1004, INV-1006, INV-1010, INV-1011, INV-1015 | Valid, in-stock, USD invoices at or below the threshold |
+| Human review | INV-1012, INV-1014 | Observable OCR-like correction or non-USD currency |
+| Rejection | INV-1002, INV-1003, INV-1005, INV-1007, INV-1008, INV-1009, INV-1013, INV-1016 | Blocking stock, identity, date, quantity, or reconciliation defects |
+
+Missing currency in the supplied CSV dialect defaults to configured USD and
+emits an informational finding. Exact aliases and parenthetical descriptors also
+emit informational findings. OCR-like corrections emit warnings and pause for
+review; informational findings do not change routing.
+
+### Business-facing demo narrative
+
+- Straight-through processing turns clean invoices into explainable mock payments.
+- Coded findings route genuine exceptions to a reviewer without hiding evidence.
+- Every stage is timestamped so processing latency and decision paths are visible.
+- Content/profile deduplication plus a payment uniqueness constraint produces zero duplicate mock payments.
+
+Start with the [interviewer application overview](backstage/docs/00-application-overview.md)
+for architecture, workflow, persistence, operations, decisions, and quality. The
+[consolidated PRD](backstage/prd/README.md) records requirements and implementation
+history.
 
 ## Evaluation Criteria
 
