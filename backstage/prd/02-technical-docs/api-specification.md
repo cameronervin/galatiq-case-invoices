@@ -92,6 +92,9 @@ python main.py --invoice_path=data/invoices/invoice_1001.txt
 ```
 
 The CLI executes synchronously and accepts optional `--timeout-seconds` (default
-300, positive). It prints one `RunDetail` JSON object. Exit codes are `0` for
+300, positive). Rich-formatted output is the default; `--format json` prints one
+compact `RunDetail` JSON object. `--show-events` expands the pretty timeline,
+while `--no-color` and `NO_COLOR` disable styles. Both `--invoice_path` and
+`--invoice-path` are accepted. Exit codes are `0` for
 completed/rejected/review-required, `2` invalid input, `3` configuration, `5`
 workflow failure, and `6` timeout.

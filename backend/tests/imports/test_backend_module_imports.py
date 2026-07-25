@@ -16,6 +16,7 @@ MODULES = [
     "backend.app.api.v1.router",
     "backend.app.bootstrap.application",
     "backend.app.bootstrap.invoice_runtime",
+    "backend.app.cli.renderers",
     "backend.app.core.config",
     "backend.app.domain.policies",
     "backend.app.domain.validation",

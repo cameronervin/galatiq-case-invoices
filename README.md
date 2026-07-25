@@ -1,5 +1,9 @@
 # Galatiq Case: Invoice Processing Automation
 
+This repository implements the case published in the
+[upstream Galatiq repository](https://github.com/galatiq-ai/galatiq-case-invoices/tree/2f150152b962ccd24b35e515e56b04f673d410bc).
+The contract comparison below is pinned to upstream commit `2f15015`.
+
 ## Background
 
 Acme Corp is a PE-backed manufacturing firm losing **$2M/year** on manual invoice processing. Invoices arrive via email as PDFs in messy formats with frequent errors. Staff manually extract data, validate against a legacy inventory database (inconsistent), obtain VP approval (via email chains), and process payment (via a banking API).
@@ -107,20 +111,44 @@ Output should include structured logs and results.
 ## Implemented Solution
 
 The primary demo is deliberately broker-free: one command initializes SQLite,
-processes an invoice synchronously through LangGraph, and prints one safe JSON
-`RunDetail`. The deterministic offline provider is the default, so the evaluator
-does not need a key, network connection, Valkey, or a web server.
+processes an invoice synchronously through LangGraph, and prints a safe,
+human-readable result. The deterministic offline provider is the default, so the
+evaluator does not need a key, network connection, Valkey, or a web server.
 
 ```bash
 uv sync
 uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
 ```
 
+Pretty output is the interactive default. Automation can request the original
+compact `RunDetail` JSON contract explicitly:
+
+```bash
+uv run python main.py --invoice_path=data/invoices/invoice_1001.txt --format json
+```
+
+Use `--show-events` to expand every persisted event in pretty mode and
+`--no-color` (or the `NO_COLOR` environment variable) for unstyled terminal
+output. The conventional `--invoice-path` spelling is an alias; the upstream
+`--invoice_path` spelling remains supported.
+
 The graph exposes five roles: extraction, inventory-backed validation, approval,
 critic, and deterministic mock payment. It uses structured artifacts, a bounded
 repair/reflection loop, append-only audit events, exact decimal money, and one
 idempotent payment per run. A requested Grok configuration never silently falls
 back to offline mode.
+
+### Upstream contract alignment
+
+| Upstream requirement | Implementation evidence |
+|---|---|
+| Original `python main.py --invoice_path=...` entry point | Preserved as the broker-free pretty-output command; `--format json` provides machine output |
+| PDF/text ingestion with vendor, amount, items, and due date | Typed document loaders and `InvoiceData` output |
+| SQLite inventory validation | Read-only inventory tool with stable findings for stock and identity defects |
+| VP approval rules with reflection or critique | Deterministic threshold policy, approval agent, critic, and one bounded revision |
+| Approved payment or explained rejection | Idempotent mock payment and coded rejection events |
+| LLM, orchestration, tool use, structured output, and self-correction | Offline/Grok provider boundary, LangGraph roles, inventory tool, typed artifacts, and bounded repair/revision |
+| Local execution without external services | Offline CLI requires no network, API key, Valkey, API, worker, or frontend |
 
 For an optional live Grok demonstration:
 

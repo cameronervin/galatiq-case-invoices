@@ -3,9 +3,10 @@
 ## US-01 — Process an invoice from the CLI
 
 The processor can run the documented command without Valkey or network access.
-Supported, non-empty local files produce one safe JSON result. Invalid input,
-configuration, workflow failure, and timeout use documented exit codes. Local
-paths never appear in output.
+Supported, non-empty local files produce one safe pretty result by default or one
+compact JSON result with `--format json`. Invalid input, configuration, workflow
+failure, and timeout use documented exit codes. Local paths never appear in
+output.
 
 ## US-02 — Upload and track a run
 

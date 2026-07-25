@@ -40,3 +40,39 @@ it("shows safe recommendation reason codes", () => {
   expect(screen.getByText("BLOCKING_FINDING")).toBeInTheDocument();
   expect(screen.getByText("POLICY_OVERRIDE")).toBeInTheDocument();
 });
+
+it("shows each recommendation reason code once", () => {
+  const detail: RunDetail = {
+    run_id: "11111111-1111-4111-8111-111111111111",
+    source_filename: "normalized.txt",
+    status: "completed",
+    stage: "finalize",
+    created_at: "2026-01-01T00:00:00Z",
+    updated_at: "2026-01-01T00:00:01Z",
+    invoice: null,
+    findings: [],
+    recommendation: {
+      proposed_route: "approve",
+      final_route: "approve",
+      reason_codes: ["ITEM_ALIAS_NORMALIZATION", "ITEM_ALIAS_NORMALIZATION"],
+      summary: "Approved safely.",
+      reflection_count: 0,
+      decided_by: "agent"
+    },
+    review: null,
+    payment: null,
+    events: [],
+    error: null
+  };
+
+  render(
+    <RunDetailPanel
+      detail={detail}
+      focusVersion={0}
+      reviewPending={false}
+      onReview={jest.fn()}
+    />
+  );
+
+  expect(screen.getAllByText("ITEM_ALIAS_NORMALIZATION")).toHaveLength(1);
+});

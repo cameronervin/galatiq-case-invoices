@@ -54,3 +54,13 @@ def test_overview_indexes_every_numbered_document() -> None:
         "backstage/docs/00-application-overview.md"
         in (PROJECT_ROOT / "README.md").read_text()
     )
+
+
+def test_readme_records_upstream_contract_and_cli_formats() -> None:
+    readme = (PROJECT_ROOT / "README.md").read_text()
+
+    assert "github.com/galatiq-ai/galatiq-case-invoices/tree/2f150152" in readme
+    assert "python main.py --invoice_path=" in readme
+    assert "--invoice-path" in readme
+    assert "--format json" in readme
+    assert "Upstream contract alignment" in readme

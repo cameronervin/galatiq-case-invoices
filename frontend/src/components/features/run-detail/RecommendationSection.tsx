@@ -5,6 +5,8 @@ export function RecommendationSection({
 }: {
   recommendation: Recommendation;
 }) {
+  const reasonCodes = [...new Set(recommendation.reason_codes)];
+
   return (
     <section className="detail-section recommendation" aria-labelledby="recommendation-heading">
       <p className="panel-kicker">Approval + critic</p>
@@ -15,9 +17,9 @@ export function RecommendationSection({
         <span>Decided by: {recommendation.decided_by}</span>
         <span>Critique revisions: {recommendation.reflection_count}</span>
       </div>
-      {recommendation.reason_codes.length ? (
+      {reasonCodes.length ? (
         <ul className="reason-codes" aria-label="Recommendation reason codes">
-          {recommendation.reason_codes.map((code) => (
+          {reasonCodes.map((code) => (
             <li key={code}>{code}</li>
           ))}
         </ul>

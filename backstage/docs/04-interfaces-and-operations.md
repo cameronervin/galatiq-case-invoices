@@ -6,9 +6,19 @@
 uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
 ```
 
-`--timeout-seconds` defaults to 300. The CLI prints one safe `RunDetail`. Exit
-codes are `0` for completed/rejected/review-required, `2` for invalid input, `3`
-for provider configuration, `5` for workflow failure, and `6` for timeout.
+Pretty output is the default. Use `--format json` for one compact `RunDetail`,
+`--show-events` for the complete pretty timeline, and `--no-color` or `NO_COLOR`
+for unstyled output. Both `--invoice_path` and `--invoice-path` are accepted.
+`--timeout-seconds` defaults to 300. Exit codes are `0` for
+completed/rejected/review-required, `2` for invalid input, `3` for provider
+configuration, `5` for workflow failure, and `6` for timeout.
+
+JSON mode preserves one result on stdout and one input/configuration error
+envelope on stderr, making it safe to pipe into tools such as `jq`:
+
+```bash
+uv run python main.py --invoice-path=data/invoices/invoice_1001.txt --format json | jq .
+```
 
 Optional live mode:
 

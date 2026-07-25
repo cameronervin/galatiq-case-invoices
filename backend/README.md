@@ -8,13 +8,15 @@ From the repository root:
 
 ```bash
 uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
+uv run python main.py --invoice-path=data/invoices/invoice_1001.txt --format json
 uv run uvicorn backend.app.main:app --reload
 uv run celery -A backend.app.workers.app:celery_app worker --loglevel=info --concurrency=1
 ```
 
-The CLI is synchronous and requires no broker. The API path requires Valkey and a
-worker for execution. Run backend tests and lint with `make test-backend` and
-`make lint-backend`.
+The CLI is synchronous and requires no broker. Pretty output is the default;
+`--format json` preserves compact machine output, and `--show-events` expands the
+pretty timeline. The API path requires Valkey and a worker for execution. Run
+backend tests and lint with `make test-backend` and `make lint-backend`.
 
 Persistence uses context-managed SQLAlchemy sessions injected into repositories;
 see [data and persistence](../backstage/docs/03-data-and-persistence.md).

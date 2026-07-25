@@ -23,8 +23,9 @@ uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
 ```
 
 It initializes SQLite, executes the typed LangGraph, deletes the staged source at
-the terminal outcome, and prints one safe `RunDetail` JSON object. No API key,
-Valkey process, web server, or network connection is needed.
+the terminal outcome, and prints a safe Rich-formatted result. Passing
+`--format json` prints one compact `RunDetail` JSON object for automation. No API
+key, Valkey process, web server, or network connection is needed.
 
 ## Business value demonstrated
 
