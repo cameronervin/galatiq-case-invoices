@@ -74,7 +74,12 @@ describe("HomePage run selection", () => {
     fireEvent.click(screen.getByRole("button", { name: /second\.txt/i }));
 
     expect(screen.getByText("Loading second.txt…")).toBeInTheDocument();
+    expect(
+      screen.getByRole("article", { name: "Loading second.txt…" })
+    ).toHaveAttribute("aria-busy", "true");
 
     await act(async () => secondRequest.resolve(second));
+    await screen.findByRole("heading", { name: "second.txt" });
+    expect(screen.queryByRole("status")).not.toBeInTheDocument();
   });
 });

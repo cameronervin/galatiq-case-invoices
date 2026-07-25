@@ -7,6 +7,7 @@ import { FindingsSection } from "@/components/features/run-detail/FindingsSectio
 import { InvoiceDetails } from "@/components/features/run-detail/InvoiceDetails";
 import { RecommendationSection } from "@/components/features/run-detail/RecommendationSection";
 import { ReviewRecord } from "@/components/features/run-detail/ReviewRecord";
+import { RunDetailSkeleton } from "@/components/features/run-detail/RunDetailSkeleton";
 import { RunOutcome } from "@/components/features/run-detail/RunOutcome";
 import { TimelineSection } from "@/components/features/run-detail/TimelineSection";
 import { StatusBadge } from "@/components/ui/StatusBadge";
@@ -37,19 +38,21 @@ export function RunDetailPanel({
     }
   }, [focusVersion]);
 
+  if (loading && !detail) {
+    return <RunDetailSkeleton selectedRunName={selectedRunName} />;
+  }
+
   if (!detail) {
     return (
       <section
         className="detail-panel detail-empty"
-        aria-busy={loading}
+        aria-busy="false"
         aria-labelledby="run-detail-heading"
       >
         <p className="panel-kicker">Selected run</p>
         <h2 id="run-detail-heading">Run details</h2>
         <p>
-          {loading
-            ? `Loading ${selectedRunName ?? "selected run"}…`
-            : "Select a recent run or process an invoice to inspect its decision trail."}
+          Select a recent run or process an invoice to inspect its decision trail.
         </p>
       </section>
     );

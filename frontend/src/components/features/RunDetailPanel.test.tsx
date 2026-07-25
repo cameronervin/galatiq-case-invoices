@@ -4,6 +4,53 @@ import type { RunDetail } from "@/types/api";
 
 import { RunDetailPanel } from "./RunDetailPanel";
 
+it("shows an accessible full-format skeleton while a run is loading", () => {
+  const { container } = render(
+    <RunDetailPanel
+      detail={null}
+      focusVersion={0}
+      loading
+      reviewPending={false}
+      selectedRunName="invoice.txt"
+      onReview={jest.fn()}
+    />
+  );
+
+  expect(
+    screen.getByRole("article", { name: "Loading invoice.txt…" })
+  ).toHaveAttribute("aria-busy", "true");
+  expect(screen.getByRole("status")).toHaveTextContent("Loading invoice.txt…");
+  expect(container.querySelector(".detail-skeleton > div")).toHaveAttribute(
+    "aria-hidden",
+    "true"
+  );
+  expect(container.querySelector(".detail-skeleton .detail-header")).not.toBeNull();
+  expect(container.querySelector(".detail-skeleton .outcome")).not.toBeNull();
+  expect(container.querySelector(".detail-skeleton .invoice-facts")).not.toBeNull();
+  expect(container.querySelector(".detail-skeleton .findings-list")).not.toBeNull();
+  expect(container.querySelector(".detail-skeleton .recommendation")).not.toBeNull();
+  expect(container.querySelector(".detail-skeleton .history-section")).not.toBeNull();
+});
+
+it("keeps the run details empty state when no run is loading", () => {
+  render(
+    <RunDetailPanel
+      detail={null}
+      focusVersion={0}
+      reviewPending={false}
+      onReview={jest.fn()}
+    />
+  );
+
+  expect(screen.getByRole("heading", { name: "Run details" })).toBeInTheDocument();
+  expect(
+    screen.getByText(
+      "Select a recent run or process an invoice to inspect its decision trail."
+    )
+  ).toBeInTheDocument();
+  expect(screen.queryByRole("status")).not.toBeInTheDocument();
+});
+
 it("shows safe recommendation reason codes", () => {
   const detail: RunDetail = {
     run_id: "11111111-1111-4111-8111-111111111111",
