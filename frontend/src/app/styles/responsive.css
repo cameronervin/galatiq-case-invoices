@@ -2,21 +2,28 @@
   .workspace-grid {
     grid-template-columns: 1fr;
     grid-template-areas:
-      "detail"
-      "recent";
+      "recent"
+      "detail";
   }
 
   .recent-runs {
     position: static;
   }
+
+  .run-list {
+    max-height: 240px;
+  }
 }
 
 @media (max-width: 650px) {
   .app-shell {
-    padding: 28px 14px 52px;
+    padding: 22px 14px 44px;
   }
 
-  .workspace-header,
+  .workspace-header {
+    margin-bottom: 16px;
+  }
+
   .upload-card,
   .upload-actions,
   .outcome-success {
@@ -24,33 +31,62 @@
     flex-direction: column;
   }
 
-  .environment-chip {
-    align-self: flex-start;
+  .upload-card {
+    gap: 12px;
   }
 
   .file-picker {
     max-width: none;
   }
 
+  .run-list {
+    max-height: 210px;
+  }
+
   .invoice-facts {
     grid-template-columns: repeat(2, minmax(0, 1fr));
+  }
+
+  .recommendation-meta {
+    grid-template-columns: 1fr;
+  }
+
+  .recommendation-meta div + div {
+    border-top: 1px solid var(--line);
+    border-left: 0;
   }
 
   .detail-header,
   .detail-section,
   .review-panel {
-    margin-right: 16px;
-    margin-left: 16px;
+    margin-right: 15px;
+    margin-left: 15px;
   }
 
   .detail-header {
-    padding-right: 0;
-    padding-left: 0;
+    margin: 0;
+    padding-right: 15px;
+    padding-left: 15px;
   }
 
   .outcome {
-    margin-right: 16px;
-    margin-left: 16px;
+    margin-right: 15px;
+    margin-left: 15px;
+  }
+
+  .button-row {
+    align-items: stretch;
+    flex-direction: column;
+  }
+
+  .finding {
+    grid-template-columns: 1fr;
+    gap: 4px;
+  }
+
+  .timeline-title {
+    flex-direction: column;
+    gap: 2px;
   }
 }
 

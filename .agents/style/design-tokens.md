@@ -6,7 +6,7 @@ stylesheets in deliberate cascade order.
 
 | Token | Current value | Use |
 | --- | --- | --- |
-| `--canvas` | `#f2f3ef` | Workspace background |
+| `--canvas` | `#f3f4f0` | Workspace background |
 | `--surface` | `#fffef9` | Primary panels |
 | `--ink` | `#17211d` | Primary text |
 | `--muted` | `#637069` | Supporting text |
@@ -17,6 +17,7 @@ stylesheets in deliberate cascade order.
 | `--red-soft` | `#fbe5e2` | Rejected and failed state |
 | `--blue-soft` | `#e2eef6` | Queued and running state |
 
-Use semantic state tokens with text labels, visible focus, readable system/body
-typography, restrained motion, and modest radii. Preserve the editorial heading
-type only for the workspace title; operational data remains plain and compact.
+Use semantic state tokens with text labels, visible focus, readable system
+typography, restrained motion, and 3-7px radii. Keep the workspace flat and
+operational: rules establish hierarchy, while shadows and decorative gradients
+are intentionally absent.

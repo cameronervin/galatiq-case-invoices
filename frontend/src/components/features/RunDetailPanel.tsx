@@ -44,7 +44,7 @@ export function RunDetailPanel({
         aria-busy={loading}
         aria-labelledby="run-detail-heading"
       >
-        <p className="panel-kicker">Audit view</p>
+        <p className="panel-kicker">Selected run</p>
         <h2 id="run-detail-heading">Run details</h2>
         <p>
           {loading
@@ -75,7 +75,13 @@ export function RunDetailPanel({
         <RecommendationSection recommendation={detail.recommendation} />
       ) : null}
       {detail.status === "review_required" && !detail.review ? (
-        <ReviewPanel pending={reviewPending} onReview={onReview} />
+        <ReviewPanel
+          key={detail.run_id}
+          invoiceNumber={detail.invoice?.invoice_number ?? null}
+          invoiceTotal={detail.invoice?.total ?? null}
+          pending={reviewPending}
+          onReview={onReview}
+        />
       ) : null}
       {detail.review ? (
         <ReviewRecord
@@ -84,7 +90,14 @@ export function RunDetailPanel({
           onReview={onReview}
         />
       ) : null}
-      <TimelineSection events={detail.events} />
+      <TimelineSection
+        defaultExpanded={
+          detail.status === "queued" ||
+          detail.status === "running" ||
+          detail.status === "failed"
+        }
+        events={detail.events}
+      />
     </article>
   );
 }

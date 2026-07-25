@@ -2,50 +2,46 @@
 
 ## Decision record
 
-| Decision | Why it fits this take-home | Cost or rejected alternative |
+| Decision | Take-home value | Deferred cost |
 | --- | --- | --- |
-| Offline provider by default | Evaluator gets deterministic, keyless, network-free behavior | Live model variability is demonstrated only in optional Grok mode |
-| One shared workflow | CLI and workspace prove the same behavior | Separate per-surface orchestration was rejected as drift-prone |
-| SQLite owns state; Valkey only queues | Durable results do not depend on broker retention | Valkey-as-database was rejected |
-| SQLAlchemy 2.0 typed ORM | Typed models, generated statements, testable constraints, and injected sessions | Direct `sqlite3` reduced dependencies but spread transaction/SQL details |
-| Context-managed session injection | Repository unit of work is explicit and always closed | Global/scoped sessions and FastAPI-owned sessions do not fit CLI/graph/worker reuse |
-| No first-party handwritten SQL | One persistence abstraction and enforceable review boundary | Raw DDL, pragmas, cursors, `text()`, and driver SQL were removed |
-| Metadata creation, not Alembic | One initial local schema keeps evaluation setup small | Migration history is deferred until schema evolution exists |
-| Typed JSON workflow artifacts | Aggregate artifacts round-trip cleanly without many thin tables | Fully normalized invoice/finding/history tables add queryability not needed here |
-| Deterministic policy after critique | Model contributes reasoning but cannot bypass business controls | Model-owned routing/payment was rejected |
-| Server-owned idempotent payment | Duplicate worker delivery cannot pay twice | Model-selected tools and live banking are out of scope |
-| No failed-run retry endpoint | Resubmitting failed content is simpler and avoids attempt/history state | Retry command, attempt counter, and retry UI were removed |
-| Delete terminal staged sources | Minimizes sensitive local residue | A retention/replay subsystem was rejected for V1 |
+| Offline provider by default | Deterministic, keyless, network-free evaluation | Live model variability is optional |
+| One workflow for every surface | CLI and workspace prove identical behavior | Surfaces cannot customize orchestration independently |
+| SQLite owns state; Valkey only queues | Broker loss cannot erase a run | SQLite limits scale and concurrency |
+| SQLAlchemy repositories | Typed constraints and isolated persistence | More structure than direct `sqlite3` |
+| Metadata creation, not Alembic | Fresh checkout needs no migration step | Schema evolution is deferred |
+| Typed JSON workflow artifacts | Small schema with exact public round trips | Less ad hoc SQL queryability |
+| Deterministic policy after critique | Models cannot bypass routing controls | Policy changes require code changes |
+| Server-owned idempotent payment | Duplicate delivery cannot pay twice | No model-selected or live banking tool |
+| Delete terminal staged sources | Minimizes sensitive local residue | Replay requires resubmission |
+| No failed-run retry endpoint | Avoids attempt/history complexity | A failed file must be resubmitted |
 
-## Why SQLAlchemy without repository leakage
+## Boundary rationale
 
-ORM entities stay inside the persistence implementation. Repositories return
-Pydantic models or immutable DTOs, so services and graph nodes do not depend on a
-database mapping strategy. The injected `SessionContext` supplies transaction
-scope without making FastAPI, Celery, or LangGraph own sessions.
+ORM entities remain inside persistence adapters. Repositories return Pydantic
+models or immutable DTOs, and injected session contexts own commit, rollback, and
+close behavior. This lets CLI, API, graph, and worker reuse the same services
+without framework-owned or global sessions.
 
-SQLite locking is configured through the driver, foreign keys through Python's
-connection API, and constraints/indexes through SQLAlchemy expressions. The
-application uses short `IMMEDIATE` write transactions and `NullPool` instead of
-first-party WAL statements or process-shared connections.
+The model contributes extraction, recommendation, and critique, while trusted
+validation and policy own blocking findings, review thresholds, rejection, and
+payment eligibility. This keeps agent behavior observable without delegating
+financial control to generated output.
 
-## Complexity deliberately avoided
+## Complexity deliberately omitted
 
-There are only five run endpoints including health, three repositories, six
-application tables, two worker tasks, one provider registry, and one graph. The
-design omits authentication, retry/history tables, provider-per-surface rules,
-offset pagination, retained-source policies, live integrations, and generalized
-workflow/plugin infrastructure.
+The prototype has five API routes including health, six application tables, two
+worker tasks, one provider registry, and one graph. It intentionally omits auth,
+tenancy, retry/history tables, retained-source replay, live integrations, offset
+pagination, and generalized workflow/plugin infrastructure.
 
 ## Scope boundary
 
-- **Implemented:** each decision above is reflected in code, tests, or public
-  behavior; static tests enforce the SQL-free boundary.
-- **Take-home default:** favor a small demonstrable vertical slice over a
-  production-shaped platform.
-- **Production follow-up:** revisit choices using measured load, compliance,
-  retention, integration, and operator requirements rather than adding speculative
-  abstractions now.
+- **Implemented:** the decisions above are enforced by code, contracts, tests, or
+  documented behavior.
+- **Take-home default:** favor one demonstrable vertical slice over speculative
+  platform infrastructure.
+- **Production follow-up:** revisit choices using measured scale, compliance,
+  retention, integration, and operator requirements.
 
-See [data and persistence](03-data-and-persistence.md) for concrete invariants and
-[quality and roadmap](06-quality-security-and-roadmap.md) for evolution paths.
+See [data and persistence](03-data-and-persistence.md) and
+[quality, security, and roadmap](06-quality-security-and-roadmap.md).

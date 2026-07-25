@@ -19,10 +19,15 @@ describe("HomePage workspace and run list", () => {
     render(<HomePage />);
 
     expect(
-      screen.getByRole("heading", { name: "Invoice processing workspace" })
+      screen.getByRole("heading", { name: "Invoice processing" })
     ).toBeInTheDocument();
     expect(screen.getByLabelText("Choose invoice")).toBeInTheDocument();
-    expect(screen.getByRole("heading", { name: "Recent runs" })).toBeInTheDocument();
+    const recentRunsHeading = screen.getByRole("heading", { name: "Recent runs" });
+    const detailHeading = screen.getByRole("heading", { name: "Run details" });
+    expect(
+      recentRunsHeading.compareDocumentPosition(detailHeading) &
+        Node.DOCUMENT_POSITION_FOLLOWING
+    ).toBeTruthy();
     expect(screen.queryByText(/retry/i)).not.toBeInTheDocument();
     await waitFor(() => expect(api.listRuns).toHaveBeenCalledWith({ limit: 20 }));
   });

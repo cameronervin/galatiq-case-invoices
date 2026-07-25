@@ -8,7 +8,7 @@ export function RunOutcome({ detail }: { detail: RunDetail }) {
       return detail.payment ? (
         <section className="outcome outcome-success" aria-label="Payment outcome">
           <div>
-            <p className="panel-kicker">Mock payment complete</p>
+            <p className="panel-kicker">Payment recorded · simulation</p>
             <strong>{formatMoney(detail.payment.amount)}</strong>
           </div>
           <p>Reference {detail.payment.mock_reference ?? "recorded"}</p>
@@ -25,7 +25,7 @@ export function RunOutcome({ detail }: { detail: RunDetail }) {
         </p>
       );
     case "review_required":
-      return <p className="outcome outcome-review">Payment is paused until a reviewer decides.</p>;
+      return <p className="outcome outcome-review">Payment paused until review is complete.</p>;
     case "queued":
     case "running":
       return <p className="outcome outcome-running">Processing stage: {detail.stage}</p>;

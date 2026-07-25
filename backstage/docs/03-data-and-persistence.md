@@ -1,86 +1,59 @@
 # Data and Persistence
 
-## SQLAlchemy model
+## SQLite model
 
-Application persistence uses SQLAlchemy 2.0 typed ORM models under
-`backend/app/infrastructure/db/models/`. One shared declarative base owns a single
-metadata graph; catalog, run, result, event, and payment modules co-locate each
-table with its constraints and indexes. The package root is only a stable export
-surface. Repository contracts live in
-`backend/app/ports/repositories.py`, while the focused SQLAlchemy implementations
-live under `backend/app/infrastructure/db/repositories/`: inventory lookup,
-run lifecycle, result/review persistence, run queries, and payments are separate
-modules composed by the concrete run adapter. `Base.metadata.create_all()` repeatably
-creates six application tables; the seed uses the SQLite dialect's idempotent
-insert construct. There is no Alembic layer or first-party handwritten SQL.
+SQLAlchemy 2.0 typed models and focused repositories own the application schema.
+`Base.metadata.create_all()` automatically creates six application tables, and
+the inventory seed is repeatable. No manual database setup, Alembic migration, or
+first-party handwritten SQL is required.
 
 | Table | Responsibility |
 | --- | --- |
-| `schema_migrations` | Records the initial schema version |
-| `inventory_items` | Canonical code, display name, stock, JSON aliases |
-| `agent_runs` | Source metadata, provider profile, state, safe error, timestamps |
-| `run_results` | Typed JSON invoice, findings, recommendation, review, loop counts |
-| `payments` | One idempotent mock-payment record per run |
-| `run_events` | Append-only sanitized timeline ordered by integer event ID |
+| `schema_migrations` | Initial schema version |
+| `inventory_items` | Canonical item, display name, stock, and aliases |
+| `agent_runs` | Source metadata, provider profile, state, and timestamps |
+| `run_results` | Typed invoice, findings, recommendation, review, and loop counts |
+| `payments` | One idempotent simulated payment per run |
+| `run_events` | Append-only sanitized timeline |
 
-Status and stage are constrained strings matching public enums. Money is stored
-as integer cents. UTC timestamps remain ISO strings. Foreign keys cascade from a
-run to its result, payment, and events. SQLAlchemy expressions define checks and
-the partial unique index for active provider profiles.
-
-## Session context and repository boundary
-
-`Database` owns the engine and `sessionmaker`. Its
-`session(write: bool = False)` context manager creates one session, commits a
-successful write, rolls back an exception, and closes in all cases. The typed
-`SessionContext` callable is injected into the inventory, run, and payment
-repositories; repositories never receive a path or retain a session.
-
-The engine uses one connection per unit of work with `NullPool`, a five-second
-driver timeout, `check_same_thread=False`, and SQLite `IMMEDIATE` write locking.
-Foreign keys are enabled through Python's SQLite connection configuration API.
-Application reads and writes use ORM entities plus SQLAlchemy `select`, `insert`,
-and `update` expressions.
+Money is stored as integer cents, UTC timestamps as ISO strings, and workflow
+aggregates as validated JSON. Fields used for lifecycle, deduplication, ordering,
+and payment guarantees remain relational and constrained.
 
 ## Transactions and invariants
 
-- Non-failed runs are unique by content hash, provider name, and provider model.
-  A failed run releases that profile so the content may create a new run.
-- Concurrent creators handle the uniqueness race by returning the winning run.
-- Review storage uses a conditional update, so the first decision wins; identical
-  unresolved decisions can redispatch and conflicts remain conflicts.
-- `payments.run_id` and `idempotency_key` are unique. Concurrent delivery returns
-  the existing payment and cannot create a second record.
-- Events append in the same transaction as their run transition and are read in
-  autoincrementing event-ID order.
-- Repositories return immutable DTOs and Pydantic domain models, never detached
-  ORM entities.
+- Each operation opens one injected SQLAlchemy session and commits or rolls back
+  as one unit of work.
+- Non-failed content is unique by content hash, provider, and model; concurrent
+  creators return the winning run.
+- Conditional review writes make the first decision authoritative while allowing
+  identical unresolved redispatch.
+- Unique run and idempotency keys prevent duplicate payments under repeated
+  worker delivery.
+- Events are written with their state transition and read by integer event ID.
+- Repositories return immutable DTOs or Pydantic models, never ORM entities.
 
-## JSON artifacts
-
-Invoice, findings, recommendation, and review are natural aggregate artifacts,
-so they are stored as SQLAlchemy `JSON` and validated at the repository boundary.
-This keeps the take-home schema small while preserving exact public types. Fields
-needed for deduplication, lifecycle queries, ordering, and payment guarantees stay
-relational and constrained.
+SQLite uses `NullPool`, a five-second driver timeout, foreign keys, and
+`IMMEDIATE` write locking. This supports the local concurrency target; it is not
+presented as a horizontally scaled database design.
 
 ## Checkpoints and source cleanup
 
-LangGraph's `SqliteSaver` owns a separate raw SQLite connection and its internal
-checkpoint schema. First-party code configures and closes that connection but
-does not execute checkpoint SQL. Application tables remain repository-owned.
+LangGraph's `SqliteSaver` manages its own checkpoint tables in the same file.
+First-party code configures that connection but does not query checkpoint tables.
 
-Uploaded sources are staged under generated names. They are deleted on completed,
-rejected, or failed outcomes. A review-required source remains only until resume
-reaches a terminal outcome. Public objects never expose its path or contents.
+Uploads are staged under generated names. Completed, rejected, and failed runs
+delete their staged source. A review-required source remains only until resume
+reaches a terminal state. Public contracts never expose source paths or content.
 
-## Compatibility and scope
+## Scope boundary
 
-- **Implemented:** metadata creation preserves current table/column contracts and
-  can open the existing local schema without destructive rewrite.
-- **Take-home default:** JSON aggregates, SQLite default journal mode, metadata
-  creation, and synchronous sessions keep local setup focused.
-- **Production follow-up:** Alembic migrations, PostgreSQL, encrypted object
-  storage/retention policy, backups, and broader concurrent-load testing.
+- **Implemented:** automatic schema/seed setup, typed SQLAlchemy repositories,
+  guarded state, validated JSON artifacts, checkpoints, and terminal cleanup.
+- **Take-home default:** one local SQLite file, metadata creation, synchronous
+  sessions, and local transient staging.
+- **Production follow-up:** PostgreSQL, Alembic, encrypted object storage and
+  retention, backups, and broader concurrency testing.
 
-See [system architecture](01-system-architecture.md) for lifecycle ownership.
+See [system architecture](01-system-architecture.md) for lifecycle ownership and
+[decisions](05-decisions-and-tradeoffs.md) for persistence tradeoffs.

@@ -47,7 +47,7 @@ describe("HomePage run selection", () => {
       screen.queryByRole("heading", { name: "first.txt" })
     ).not.toBeInTheDocument();
     expect(
-      screen.queryByRole("button", { name: "Approve and mock pay" })
+      screen.queryByRole("button", { name: "Approve invoice" })
     ).not.toBeInTheDocument();
 
     await act(async () => secondRequest.resolve(second));

@@ -1,18 +1,16 @@
 .workspace-grid {
   display: grid;
-  grid-template-columns: minmax(260px, 0.31fr) minmax(0, 1fr);
+  grid-template-columns: minmax(240px, 280px) minmax(0, 1fr);
   grid-template-areas: "recent detail";
-  gap: 16px;
+  gap: 14px;
   align-items: start;
 }
 
 .recent-runs,
-.detail-panel,
-.panel {
+.detail-panel {
   border: 1px solid var(--line);
-  border-radius: 14px;
+  border-radius: 7px;
   background: var(--surface);
-  box-shadow: 0 8px 26px rgb(23 33 29 / 4%);
 }
 
 .recent-runs {
@@ -27,42 +25,40 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 16px;
-  padding: 18px;
+  padding: 15px 16px;
   border-bottom: 1px solid var(--line);
 }
 
 .section-heading.compact {
-  padding: 0 0 14px;
+  padding: 0 0 13px;
   border: 0;
 }
 
 .section-heading h2 {
-  font-size: 1.05rem;
+  font-size: 0.98rem;
 }
 
 .section-heading h3,
 .detail-section h3,
 .review-panel h3 {
-  font-size: 1rem;
+  font-size: 0.98rem;
 }
 
 .record-count,
 .confidence {
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.7rem;
   font-weight: 700;
 }
 
 .confidence {
-  padding: 4px 8px;
-  border-radius: 999px;
-  background: var(--mint);
+  padding-top: 2px;
   color: var(--forest);
   text-transform: capitalize;
 }
 
 .run-list {
-  max-height: 650px;
+  max-height: 560px;
   margin: 0;
   padding: 0;
   overflow-y: auto;
@@ -76,9 +72,10 @@
 .run-list-item {
   display: grid;
   width: 100%;
+  min-height: 62px;
   grid-template-columns: minmax(0, 1fr) auto;
-  gap: 8px;
-  padding: 15px 18px;
+  gap: 7px;
+  padding: 12px 14px;
   border: 0;
   border-left: 3px solid transparent;
   background: transparent;
@@ -87,19 +84,19 @@
   text-align: left;
 }
 
-.run-list-item:hover,
-.run-list-item[data-selected="true"] {
-  background: #f1f6f2;
+.run-list-item:hover {
+  background: #f7f8f5;
 }
 
 .run-list-item[data-selected="true"] {
   border-left-color: var(--forest);
+  background: #f0f4f0;
 }
 
 .run-list-name {
   overflow: hidden;
-  font-size: 0.86rem;
-  font-weight: 750;
+  font-size: 0.82rem;
+  font-weight: 720;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -107,43 +104,39 @@
 .run-list-meta {
   grid-column: 1 / -1;
   color: var(--muted);
-  font-size: 0.72rem;
+  font-size: 0.69rem;
 }
 
 .status-badge {
   display: inline-flex;
   flex: none;
   align-items: center;
-  gap: 6px;
   width: fit-content;
-  padding: 4px 8px;
-  border-radius: 999px;
+  padding: 3px 6px;
+  border: 1px solid #bfd0dc;
+  border-radius: 3px;
   background: var(--blue-soft);
   color: var(--blue);
-  font-size: 0.69rem;
+  font-size: 0.65rem;
   font-weight: 800;
   white-space: nowrap;
 }
 
-.status-dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  background: currentColor;
-}
-
 .status-completed {
+  border-color: #b8d5c3;
   background: var(--mint);
   color: var(--forest);
 }
 
 .status-review_required {
+  border-color: #e7c997;
   background: var(--amber-soft);
   color: var(--amber);
 }
 
 .status-rejected,
 .status-failed {
+  border-color: #e3b8b3;
   background: var(--red-soft);
   color: var(--red);
 }

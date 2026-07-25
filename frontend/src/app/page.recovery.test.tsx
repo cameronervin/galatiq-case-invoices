@@ -107,7 +107,8 @@ describe("HomePage error recovery", () => {
     fireEvent.change(await screen.findByLabelText("Review reason"), {
       target: { value: "Reviewed the warning." }
     });
-    fireEvent.click(screen.getByRole("button", { name: "Approve and mock pay" }));
+    fireEvent.click(screen.getByRole("button", { name: "Approve invoice" }));
+    fireEvent.click(screen.getByRole("button", { name: "Confirm approval" }));
 
     expect(
       await screen.findByRole("button", { name: "Retry worker resume" })

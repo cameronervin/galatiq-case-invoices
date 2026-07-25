@@ -1,9 +1,10 @@
 # Frontend
 
 The Next.js workspace supports invoice upload, the newest 20 runs, live polling,
-extracted invoice detail, findings, recommendation and timeline inspection,
-human review, and completed/rejected/failed outcomes. Payment language is always
-explicitly marked as mock; there is no failed-run retry control.
+extracted invoice detail, findings, recommendation and progressively disclosed
+workflow history, human review, and completed/rejected/failed outcomes. Approval
+requires an inline second-step confirmation before simulated payment; there is no
+failed-run retry control.
 
 From the repository root:
 

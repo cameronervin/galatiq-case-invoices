@@ -1,46 +1,59 @@
 .invoice-facts {
   display: grid;
   grid-template-columns: repeat(3, minmax(0, 1fr));
-  gap: 14px;
-  margin: 0 0 20px;
+  margin: 0 0 18px;
+  border-top: 1px solid var(--line);
+  border-left: 1px solid var(--line);
 }
 
 .invoice-facts div {
   min-width: 0;
-  padding: 10px 12px;
-  border-radius: 7px;
-  background: var(--canvas);
+  padding: 10px 11px;
+  border-right: 1px solid var(--line);
+  border-bottom: 1px solid var(--line);
 }
 
-.invoice-facts dt {
-  margin-bottom: 4px;
+.invoice-facts dt,
+.recommendation-meta dt {
+  margin-bottom: 3px;
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.65rem;
   font-weight: 700;
   text-transform: uppercase;
 }
 
-.invoice-facts dd {
+.invoice-facts dd,
+.recommendation-meta dd {
   margin: 0;
-  font-size: 0.84rem;
+  font-size: 0.82rem;
   font-weight: 650;
+}
+
+.invoice-facts .fact-emphasis {
+  border-bottom-color: var(--forest);
+  color: var(--forest);
+}
+
+.invoice-facts .fact-emphasis dd {
+  font-size: 0.92rem;
+  font-weight: 800;
 }
 
 .table-wrap {
   overflow-x: auto;
   border: 1px solid var(--line);
-  border-radius: 8px;
+  border-radius: 4px;
 }
 
 table {
   width: 100%;
   border-collapse: collapse;
-  font-size: 0.78rem;
+  font-size: 0.76rem;
 }
 
 th,
 td {
-  padding: 10px 12px;
+  padding: 9px 11px;
   border-bottom: 1px solid var(--line);
   text-align: right;
   white-space: nowrap;
@@ -56,9 +69,9 @@ tbody tr:last-child td {
 }
 
 th {
-  background: var(--canvas);
+  background: #f7f8f5;
   color: var(--muted);
-  font-size: 0.67rem;
+  font-size: 0.64rem;
   letter-spacing: 0.04em;
   text-transform: uppercase;
 }
@@ -71,12 +84,13 @@ td span {
 td span {
   margin-top: 2px;
   color: var(--muted);
-  font-size: 0.7rem;
+  font-size: 0.68rem;
 }
 
 .findings-list {
   margin: 0;
   padding: 0;
+  border-top: 1px solid var(--line);
   list-style: none;
 }
 
@@ -84,78 +98,75 @@ td span {
   display: grid;
   grid-template-columns: 68px minmax(0, 1fr);
   gap: 12px;
-  padding: 11px 12px;
+  padding: 11px 10px;
+  border-bottom: 1px solid var(--line);
   border-left: 3px solid var(--blue);
-  background: var(--blue-soft);
-}
-
-.finding + .finding {
-  margin-top: 7px;
 }
 
 .finding-warning {
   border-left-color: var(--amber);
-  background: var(--amber-soft);
 }
 
 .finding-blocking {
   border-left-color: var(--red);
-  background: var(--red-soft);
 }
 
 .finding-severity {
-  color: var(--muted);
-  font-size: 0.67rem;
+  color: var(--blue);
+  font-size: 0.64rem;
   font-weight: 800;
   text-transform: uppercase;
 }
 
+.finding-warning .finding-severity {
+  color: var(--amber);
+}
+
+.finding-blocking .finding-severity {
+  color: var(--red);
+}
+
 .finding strong {
-  font-size: 0.8rem;
+  font-size: 0.78rem;
 }
 
 .finding p {
   margin: 4px 0 0;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.66rem;
+  font-size: 0.64rem;
 }
 
 .recommendation > p:not(.panel-kicker) {
-  margin: 10px 0;
+  margin: 8px 0 10px;
   color: var(--muted);
+  font-size: 0.84rem;
   line-height: 1.55;
 }
 
 .recommendation-meta {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
+  display: grid;
+  grid-template-columns: repeat(3, minmax(0, 1fr));
+  margin: 6px 0 10px;
+  border: 1px solid var(--line);
 }
 
-.recommendation-meta span,
-.pending-note {
-  padding: 5px 8px;
-  border-radius: 5px;
-  background: var(--canvas);
-  color: var(--muted);
-  font-size: 0.69rem;
+.recommendation-meta div {
+  padding: 9px 10px;
+}
+
+.recommendation-meta div + div {
+  border-left: 1px solid var(--line);
 }
 
 .reason-codes {
-  display: flex;
-  flex-wrap: wrap;
-  gap: 6px;
-  margin: 10px 0 0;
-  padding: 0;
-  list-style: none;
-}
-
-.reason-codes li {
-  padding: 5px 8px;
-  border: 1px solid var(--line);
-  border-radius: 5px;
+  margin: 0;
+  padding-left: 19px;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.69rem;
+  font-size: 0.66rem;
+}
+
+.reason-codes li + li {
+  margin-top: 4px;
 }

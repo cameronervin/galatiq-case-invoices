@@ -36,9 +36,8 @@ export function UploadPanel({ pending, onUpload }: UploadPanelProps) {
   return (
     <form className="upload-card" aria-busy={pending} onSubmit={submitInvoice}>
       <div>
-        <p className="panel-kicker">New run</p>
-        <h2>Process an invoice</h2>
-        <p>CSV, JSON, XML, TXT, or PDF · up to 10 MB</p>
+        <h2>New invoice</h2>
+        <p>CSV, JSON, XML, TXT, or PDF · 10 MB maximum</p>
         {error ? (
           <p className="alert alert-error" id="invoice-file-error" role="alert">
             {error}
@@ -63,7 +62,7 @@ export function UploadPanel({ pending, onUpload }: UploadPanelProps) {
           />
         </label>
         <button className="button button-primary" disabled={pending} type="submit">
-          {pending ? "Submitting…" : "Process invoice"}
+          {pending ? "Processing…" : "Process invoice"}
         </button>
       </div>
     </form>

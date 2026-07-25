@@ -30,4 +30,16 @@ describe("global stylesheet architecture", () => {
       expect(stylesheet.trimEnd().split("\n").length).toBeLessThan(200);
     }
   });
+
+  it("keeps the operational workspace free of decorative gradients, shadows, and motion", () => {
+    const styles = stylesheetImports
+      .slice(1)
+      .map((importRule) => {
+        const relativePath = importRule.match(/"(.+)"/)?.[1];
+        return readFileSync(join(appStylesRoot, relativePath!), "utf8");
+      })
+      .join("\n");
+
+    expect(styles).not.toMatch(/(?:linear|radial)-gradient|box-shadow|translateY/);
+  });
 });

@@ -1,14 +1,162 @@
 # Galatiq Case: Invoice Processing Automation
 
-This repository implements the case published in the
+This repository implements the invoice-processing take-home published in the
 [upstream Galatiq repository](https://github.com/galatiq-ai/galatiq-case-invoices/tree/2f150152b962ccd24b35e515e56b04f673d410bc).
-The contract comparison below is pinned to upstream commit `2f15015`.
+It turns supplied invoice files into typed data, validates them against local
+inventory, records an explainable approval decision, routes exceptions to a
+reviewer, and creates an idempotent simulated payment for approved invoices.
+
+> Start with the [interviewer application overview](backstage/docs/00-application-overview.md)
+> for deeper context. The numbered `backstage/docs/` set covers architecture,
+> agent workflow, persistence, operations, decisions, security, and roadmap.
+
+## Quick start: broker-free CLI
+
+Prerequisites: Python 3.12+ and [`uv`](https://docs.astral.sh/uv/). The default
+offline provider needs no API key, network connection, Docker, Valkey, backend,
+worker, or frontend.
+
+```bash
+uv sync
+uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
+```
+
+The application automatically creates and seeds the local SQLite database.
+Pretty terminal output is the default; automation can request the compact public
+`RunDetail` contract:
+
+```bash
+uv run python main.py --invoice-path=data/invoices/invoice_1001.txt --format json
+```
+
+Use `--show-events` for the full persisted timeline and `--no-color` or
+`NO_COLOR` for unstyled output. Both `--invoice_path` and `--invoice-path` are
+accepted.
+
+Optional live Grok mode requires a valid key and never silently falls back to
+offline inference:
+
+```bash
+APP_LLM_PROVIDER=grok APP_LLM_MODEL=grok-4.5 XAI_API_KEY=your_key \
+  uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
+```
+
+## Optional full workspace
+
+The asynchronous workspace adds FastAPI, Celery, Valkey, and Next.js around the
+same workflow. It requires Node.js 20.9+, `pnpm`, and Docker in addition to the
+CLI prerequisites.
+
+Install from the repository root:
+
+```bash
+uv sync
+pnpm install
+```
+
+The checked-in examples document every setting, but copying them is optional
+because local defaults already match the commands below:
+
+```bash
+cp .env.example .env
+cp frontend/.env.example frontend/.env.local
+```
+
+Start each process in its own terminal, in this order:
+
+```bash
+make broker-up
+make dev-worker
+make dev-backend
+make dev-frontend
+```
+
+Open the workspace at `http://localhost:3000`. FastAPI runs at
+`http://127.0.0.1:8000`, with interactive OpenAPI documentation at
+`http://127.0.0.1:8000/docs`. The UI supports upload, recent-run triage, selected
+run polling, findings and decision-history inspection, and human review.
+Approval requires an explicit second-step confirmation before a simulated
+payment. SQLite remains the source of truth; Valkey transports only run IDs and
+small task results.
+
+Stop local queue infrastructure with:
+
+```bash
+make broker-down
+```
+
+## How it works
+
+```text
+CLI ------------------------> InvoiceProcessingService ----> LangGraph
+                                      |                         |
+Next.js -> FastAPI -> Celery ---------+                         +-> providers
+              |                       |                         +-> inventory tool
+              +-> Valkey: run IDs     +-> SQLAlchemy/SQLite     +-> mock payment
+```
+
+The typed LangGraph exposes extraction, inventory-backed validation, approval,
+critic, deterministic policy, review, and payment steps. Extraction and critique
+loops are bounded. Policy—not the model—owns final routing, and payment is a
+server-owned idempotent simulation. Audit events expose stage transitions and
+safe reason codes without storing prompts, provider payloads, or hidden
+reasoning.
+
+## Demo scenarios
+
+| Outcome | Fixture | Expected behavior |
+| --- | --- | --- |
+| Automatic payment | `invoice_1001.txt` | Completes with one simulated payment |
+| Human review | `invoice_1012.txt` | Pauses on an OCR-like correction warning |
+| Rejection | `invoice_1002.txt` | Rejects with an inventory mismatch finding |
+
+The full supplied-fixture matrix is recorded in the
+[quality and roadmap guide](backstage/docs/06-quality-security-and-roadmap.md#fixture-matrix).
+
+## Upstream contract alignment
+
+| Upstream requirement | Implemented solution |
+| --- | --- |
+| `python main.py --invoice_path=...` | Preserved as the synchronous, broker-free entry point |
+| PDF/text extraction with structured fields | Bounded document loaders and typed `InvoiceData` |
+| SQLite inventory validation | Automatically created and seeded inventory with stable findings |
+| VP approval with reflection | Approval agent, critic, one bounded revision, and deterministic policy |
+| Approved payment or explained rejection | Idempotent mock payment and coded rejection events |
+| LLM, orchestration, tools, structured output | Offline/Grok provider boundary, LangGraph roles, inventory tool, and typed artifacts |
+| Local execution | Default demo needs no external service or network access |
+| Above-and-beyond UI/UX | Optional API, worker, broker, and review workspace |
+
+## Verification
+
+Run the complete local suite from the repository root:
+
+```bash
+make verify
+```
+
+This checks generated API artifacts, backend tests and branch coverage, Python
+lint, frontend tests and lint, TypeScript types, and a production frontend build.
+The [operations guide](backstage/docs/04-interfaces-and-operations.md) documents
+the Docker-backed execute and review/resume smoke test.
+
+## More documentation
+
+- [Application overview](backstage/docs/00-application-overview.md)
+- [Interfaces and operations](backstage/docs/04-interfaces-and-operations.md)
+- [Consolidated PRD and implementation history](backstage/prd/README.md)
+
+<details>
+<summary>Original take-home assessment</summary>
+
+The text below preserves the assignment at upstream commit `2f15015` for reviewer
+reference.
 
 ## Background
 
 Acme Corp is a PE-backed manufacturing firm losing **$2M/year** on manual invoice processing. Invoices arrive via email as PDFs in messy formats with frequent errors. Staff manually extract data, validate against a legacy inventory database (inconsistent), obtain VP approval (via email chains), and process payment (via a banking API).
 
 **Current pain points:**
+
 - 30% error rate
 - 5-day processing delays
 - Frustrated stakeholders
@@ -103,99 +251,10 @@ response = client.chat.completions.create(
 The system should be executable from the command line:
 
 ```bash
-python main.py --invoice_path=data/invoices/invoice_1001.txt
+python main.py --invoice_path=data/invoices/invoice1.txt
 ```
 
 Output should include structured logs and results.
-
-## Implemented Solution
-
-The primary demo is deliberately broker-free: one command initializes SQLite,
-processes an invoice synchronously through LangGraph, and prints a safe,
-human-readable result. The deterministic offline provider is the default, so the
-evaluator does not need a key, network connection, Valkey, or a web server.
-
-```bash
-uv sync
-uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
-```
-
-Pretty output is the interactive default. Automation can request the original
-compact `RunDetail` JSON contract explicitly:
-
-```bash
-uv run python main.py --invoice_path=data/invoices/invoice_1001.txt --format json
-```
-
-Use `--show-events` to expand every persisted event in pretty mode and
-`--no-color` (or the `NO_COLOR` environment variable) for unstyled terminal
-output. The conventional `--invoice-path` spelling is an alias; the upstream
-`--invoice_path` spelling remains supported.
-
-The graph exposes five roles: extraction, inventory-backed validation, approval,
-critic, and deterministic mock payment. It uses structured artifacts, a bounded
-repair/reflection loop, append-only audit events, exact decimal money, and one
-idempotent payment per run. A requested Grok configuration never silently falls
-back to offline mode.
-
-### Upstream contract alignment
-
-| Upstream requirement | Implementation evidence |
-|---|---|
-| Original `python main.py --invoice_path=...` entry point | Preserved as the broker-free pretty-output command; `--format json` provides machine output |
-| PDF/text ingestion with vendor, amount, items, and due date | Typed document loaders and `InvoiceData` output |
-| SQLite inventory validation | Read-only inventory tool with stable findings for stock and identity defects |
-| VP approval rules with reflection or critique | Deterministic threshold policy, approval agent, critic, and one bounded revision |
-| Approved payment or explained rejection | Idempotent mock payment and coded rejection events |
-| LLM, orchestration, tool use, structured output, and self-correction | Offline/Grok provider boundary, LangGraph roles, inventory tool, typed artifacts, and bounded repair/revision |
-| Local execution without external services | Offline CLI requires no network, API key, Valkey, API, worker, or frontend |
-
-For an optional live Grok demonstration:
-
-```bash
-APP_LLM_PROVIDER=grok APP_LLM_MODEL=grok-4.5 XAI_API_KEY=your_key \
-  uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
-```
-
-The FastAPI, Celery, Valkey, and Next.js workspace are an above-and-beyond
-asynchronous surface. Start each process in its own terminal:
-
-```bash
-pnpm install
-make broker-up
-make dev-worker
-make dev-backend
-make dev-frontend
-```
-
-Open `http://localhost:3000` to upload an invoice, inspect findings and the agent
-timeline, and approve or reject human-review cases. Valkey carries only run IDs
-and small task results; SQLite remains the source of truth.
-
-### Supplied-fixture outcomes
-
-| Route | Fixtures | Why |
-|---|---|---|
-| Automatic mock payment | INV-1001, INV-1004, revised INV-1004, INV-1006, INV-1010, INV-1011, INV-1015 | Valid, in-stock, USD invoices at or below the threshold |
-| Human review | INV-1012, INV-1014 | Observable OCR-like correction or non-USD currency |
-| Rejection | INV-1002, INV-1003, INV-1005, INV-1007, INV-1008, INV-1009, INV-1013, INV-1016 | Blocking stock, identity, date, quantity, or reconciliation defects |
-
-Missing currency in the supplied CSV dialect defaults to configured USD and
-emits an informational finding. Exact aliases and parenthetical descriptors also
-emit informational findings. OCR-like corrections emit warnings and pause for
-review; informational findings do not change routing.
-
-### Business-facing demo narrative
-
-- Straight-through processing turns clean invoices into explainable mock payments.
-- Coded findings route genuine exceptions to a reviewer without hiding evidence.
-- Every stage is timestamped so processing latency and decision paths are visible.
-- Content/profile deduplication plus a payment uniqueness constraint produces zero duplicate mock payments.
-
-Start with the [interviewer application overview](backstage/docs/00-application-overview.md)
-for architecture, workflow, persistence, operations, decisions, and quality. The
-[consolidated PRD](backstage/prd/README.md) records requirements and implementation
-history.
 
 ## Evaluation Criteria
 
@@ -210,3 +269,5 @@ history.
 ## Submission
 
 Submit your solution as a link to a public GitHub repository — GitHub only (github.com).
+
+</details>

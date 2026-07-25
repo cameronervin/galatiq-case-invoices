@@ -1,36 +1,49 @@
 .review-panel {
-  border-radius: 0;
   background: transparent;
-  box-shadow: none;
 }
 
 .review-panel > p:not(.panel-kicker, .field-error) {
-  margin: 8px 0 16px;
+  margin: 7px 0 14px;
   color: var(--muted);
-  font-size: 0.84rem;
+  font-size: 0.82rem;
 }
 
 .review-panel label {
   display: block;
   margin-bottom: 6px;
-  font-size: 0.76rem;
-  font-weight: 750;
+  font-size: 0.74rem;
+  font-weight: 720;
 }
 
 .review-panel textarea {
   width: 100%;
-  min-height: 90px;
+  min-height: 88px;
   resize: vertical;
   padding: 10px;
   border: 1px solid var(--line-strong);
-  border-radius: 7px;
-  background: #ffffff;
+  border-radius: 4px;
+  background: var(--surface-strong);
 }
 
 .field-error {
   margin: 6px 0 0;
   color: var(--red);
-  font-size: 0.76rem;
+  font-size: 0.74rem;
+}
+
+.approval-confirmation {
+  margin-top: 12px;
+  padding: 12px;
+  border: 1px solid #b8d5c3;
+  border-left: 3px solid var(--forest);
+  background: #f5f9f6;
+}
+
+.approval-confirmation > p {
+  margin: 0;
+  color: var(--ink);
+  font-size: 0.8rem;
+  line-height: 1.5;
 }
 
 .timeline {
@@ -42,13 +55,13 @@
 .timeline li {
   position: relative;
   display: grid;
-  grid-template-columns: 18px minmax(0, 1fr);
+  grid-template-columns: 17px minmax(0, 1fr);
   gap: 8px;
 }
 
 .timeline li:not(:last-child)::before {
   position: absolute;
-  top: 14px;
+  top: 13px;
   bottom: -4px;
   left: 5px;
   width: 1px;
@@ -57,19 +70,19 @@
 }
 
 .timeline li + li {
-  margin-top: 13px;
+  margin-top: 12px;
 }
 
 .timeline-marker {
   position: relative;
   z-index: 1;
-  width: 11px;
-  height: 11px;
+  width: 10px;
+  height: 10px;
   margin-top: 2px;
   border: 2px solid var(--surface);
   border-radius: 50%;
   background: var(--forest);
-  box-shadow: 0 0 0 1px var(--forest);
+  outline: 1px solid var(--forest);
 }
 
 .timeline-title {
@@ -79,13 +92,13 @@
 }
 
 .timeline-title strong {
-  font-size: 0.78rem;
+  font-size: 0.76rem;
 }
 
 .timeline-title time,
 .timeline p {
   color: var(--muted);
-  font-size: 0.68rem;
+  font-size: 0.66rem;
 }
 
 .timeline p {
@@ -95,16 +108,23 @@
 
 .empty-state {
   margin: 0;
-  padding: 22px 18px;
+  padding: 18px 16px;
   color: var(--muted);
-  font-size: 0.82rem;
+  font-size: 0.8rem;
   line-height: 1.5;
 }
 
 .empty-state.inset {
-  padding: 12px;
-  border-radius: 7px;
-  background: var(--canvas);
+  padding: 10px 0;
+}
+
+.pending-note {
+  width: fit-content;
+  padding: 5px 8px;
+  border-left: 3px solid var(--amber);
+  background: var(--amber-soft);
+  color: var(--amber);
+  font-size: 0.69rem;
 }
 
 .sr-only {

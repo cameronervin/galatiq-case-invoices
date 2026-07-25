@@ -5,14 +5,15 @@
 }
 
 .detail-empty {
-  min-height: 320px;
-  padding: 32px;
+  min-height: 220px;
+  padding: 26px 24px;
 }
 
 .detail-empty p:not(.panel-kicker) {
   max-width: 430px;
+  margin-bottom: 0;
   color: var(--muted);
-  line-height: 1.6;
+  line-height: 1.55;
 }
 
 .detail-header {
@@ -20,30 +21,27 @@
   align-items: flex-start;
   justify-content: space-between;
   gap: 20px;
-  padding: 22px 24px;
+  padding: 19px 22px;
   border-bottom: 1px solid var(--line);
 }
 
 .detail-header h2 {
-  font-size: 1.24rem;
+  font-size: 1.18rem;
 }
 
 .run-id {
-  margin: 7px 0 0;
+  margin: 5px 0 0;
   color: var(--muted);
   font-family: ui-monospace, SFMono-Regular, Menlo, monospace;
-  font-size: 0.68rem;
+  font-size: 0.65rem;
 }
 
 .outcome {
-  margin: 18px 24px 0;
-  padding: 13px 15px;
-  border-radius: 9px;
-  font-size: 0.86rem;
-}
-
-.outcome p,
-.outcome {
+  margin: 16px 22px 0;
+  padding: 11px 13px;
+  border-left: 3px solid currentColor;
+  border-radius: 3px;
+  font-size: 0.82rem;
   line-height: 1.45;
 }
 
@@ -58,11 +56,11 @@
 
 .outcome-success p {
   margin: 0;
-  font-size: 0.76rem;
+  font-size: 0.73rem;
 }
 
 .outcome-success .panel-kicker {
-  margin-bottom: 3px;
+  margin-bottom: 2px;
 }
 
 .outcome-rejected,
@@ -83,11 +81,38 @@
 
 .detail-section,
 .review-panel {
-  margin: 0 24px;
-  padding: 24px 0;
+  margin: 0 22px;
+  padding: 21px 0;
   border-bottom: 1px solid var(--line);
 }
 
 .detail-section:last-child {
   border-bottom: 0;
+}
+
+.disclosure summary {
+  min-height: 44px;
+  padding: 12px 0;
+  color: var(--ink);
+  cursor: pointer;
+  font-size: 0.78rem;
+  font-weight: 720;
+  list-style-position: inside;
+}
+
+.disclosure summary::marker {
+  color: var(--muted);
+}
+
+.history-section {
+  padding-top: 10px;
+}
+
+.history-disclosure[open] summary {
+  margin-bottom: 14px;
+}
+
+.history-disclosure summary .record-count {
+  float: right;
+  margin-top: 2px;
 }

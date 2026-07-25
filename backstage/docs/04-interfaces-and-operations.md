@@ -1,101 +1,56 @@
 # Interfaces and Operations
 
+## Prerequisites and install
+
+- Broker-free CLI: Python 3.12+ and `uv`.
+- Optional workspace: Node.js 20.9+, `pnpm`, and Docker in addition to the CLI
+  prerequisites.
+
+Install from the repository root:
+
+```bash
+uv sync
+pnpm install
+```
+
+SQLite tables and inventory seed data are created automatically. The offline
+defaults work without environment files. To make local configuration explicit:
+
+```bash
+cp .env.example .env
+cp frontend/.env.example frontend/.env.local
+```
+
 ## CLI
 
 ```bash
 uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
 ```
 
-Pretty output is the default. Use `--format json` for one compact `RunDetail`,
-`--show-events` for the complete pretty timeline, and `--no-color` or `NO_COLOR`
-for unstyled output. Both `--invoice_path` and `--invoice-path` are accepted.
-`--timeout-seconds` defaults to 300. Exit codes are `0` for
-completed/rejected/review-required, `2` for invalid input, `3` for provider
-configuration, `5` for workflow failure, and `6` for timeout.
-
-JSON mode preserves one result on stdout and one input/configuration error
-envelope on stderr, making it safe to pipe into tools such as `jq`:
+Both `--invoice_path` and `--invoice-path` are accepted. Pretty output is the
+default; `--format json` emits one compact `RunDetail`, `--show-events` expands
+the pretty timeline, and `--no-color` or `NO_COLOR` disables styling.
+`--timeout-seconds` defaults to 300.
 
 ```bash
-uv run python main.py --invoice-path=data/invoices/invoice_1001.txt --format json | jq .
+uv run python main.py --invoice-path=data/invoices/invoice_1001.txt --format json
 ```
 
-Optional live mode:
+Exit codes are `0` for completed, rejected, or review-required; `2` for invalid
+input; `3` for provider configuration; `5` for workflow failure; and `6` for
+timeout. JSON mode keeps its single result on stdout and input/configuration
+errors on stderr.
+
+Optional Grok mode:
 
 ```bash
 APP_LLM_PROVIDER=grok APP_LLM_MODEL=grok-4.5 XAI_API_KEY=your_key \
   uv run python main.py --invoice_path=data/invoices/invoice_1001.txt
 ```
 
-## HTTP API
+## Workspace startup
 
-All routes use `/api/v1`:
-
-| Method | Path | Contract |
-| --- | --- | --- |
-| `GET` | `/health` | Process health |
-| `POST` | `/runs` | `202` new queued run; `200` same-profile duplicate |
-| `GET` | `/runs?limit=20` | Newest runs; limit 1-50 |
-| `GET` | `/runs/{run_id}` | Public run detail |
-| `POST` | `/runs/{run_id}/review` | Store and queue approve/reject resume |
-
-There is no retry endpoint, offset pagination, total count, or status filter.
-Errors use a stable code, safe message, and optional run ID. Public contracts do
-not expose paths, prompts, keys, provider payloads, documents, or hidden reasoning.
-Upload validation distinguishes `EMPTY_FILE`, `UNSUPPORTED_FILE_TYPE`, and
-`FILE_TOO_LARGE`; the last uses the configured effective byte limit.
-
-## Celery contract
-
-The worker has execute and resume tasks. Each receives only a `run_id` keyword
-argument, loads authoritative state through the service, and returns only
-`{run_id, status, error_code}`. Celery is delivery infrastructure; it does not
-run the broker-free CLI and it does not store complete business state in Valkey.
-
-## Frontend and OpenAPI
-
-The Next.js workspace supports upload, newest-20 navigation, selected-run polling,
-invoice and finding inspection, timeline, human review, and terminal outcomes.
-Polling ignores stale selection responses and retries transient read failures. A
-review saved during a queue outage exposes an identical worker-resume redispatch;
-failed workflow runs still have no retry control. Payment copy always says the
-payment is simulated.
-
-Transport, runtime response decoding, workspace orchestration, and run-detail
-presentation are separate modules. Runtime decoders reject malformed nested API
-responses before they reach components, and list/review state is keyed so stale
-requests cannot regress a newer run or disable an unrelated selection.
-
-`frontend/openapi.json` is a checked-in generated contract snapshot, not a runtime
-dependency. `make generate-api-types` intentionally refreshes the snapshot and
-`src/types/generated-api.ts`; `make check-generated` compares both with temporary
-fresh outputs and fails on drift without rewriting the worktree.
-
-Validate the UI with:
-
-```bash
-make check-generated
-make test-frontend
-make lint-frontend
-make typecheck-frontend
-make build-frontend
-```
-
-## Local startup
-
-Prerequisites are Python 3.12+, `uv`, Node.js 20+, and `pnpm`. Docker is needed
-only for the Valkey-backed worker/workspace path.
-
-Install and configure:
-
-```bash
-uv sync
-pnpm install
-cp .env.example .env
-cp frontend/.env.example frontend/.env.local
-```
-
-For the optional workspace, run each command in its own terminal:
+Run each command in its own terminal, in this order:
 
 ```bash
 make broker-up
@@ -104,44 +59,90 @@ make dev-backend
 make dev-frontend
 ```
 
-Open `http://localhost:3000`; FastAPI is at `http://127.0.0.1:8000` and its
-interactive OpenAPI page is `/docs`.
+| Surface | Address or command |
+| --- | --- |
+| Frontend | `http://localhost:3000` |
+| FastAPI | `http://127.0.0.1:8000` |
+| OpenAPI UI | `http://127.0.0.1:8000/docs` |
+| Stop Valkey | `make broker-down` |
+
+Backend and worker must use the same `APP_DATABASE_PATH` and `APP_UPLOAD_DIR`.
+The documented root-level commands share the same defaults.
+
+## HTTP API and worker
+
+All routes use `/api/v1`:
+
+| Method | Path | Behavior |
+| --- | --- | --- |
+| `GET` | `/health` | Process health |
+| `POST` | `/runs` | `202` new queued run; `200` same-profile duplicate |
+| `GET` | `/runs?limit=20` | Newest runs; limit 1–50 |
+| `GET` | `/runs/{run_id}` | Public run detail |
+| `POST` | `/runs/{run_id}/review` | Persist and queue approve/reject resume |
+
+Errors expose a stable code, safe message, and optional run ID. Public contracts
+exclude paths, documents, prompts, credentials, provider payloads, and hidden
+reasoning. There is no failed-run retry endpoint, offset pagination, total count,
+or status filter.
+
+Celery registers `invoice_processing.agent_runs.execute` and
+`invoice_processing.agent_runs.resume`. Each task receives only a `run_id` and
+returns `{run_id, status, error_code}`. SQLite—not Valkey task results—holds the
+authoritative run.
+
+## Frontend and OpenAPI
+
+The Next.js workspace supports upload, newest-20 triage, selected-run polling,
+invoice and finding inspection, progressively disclosed decision metadata and
+workflow history, human review, and terminal outcomes. Approval uses an inline
+second-step confirmation that identifies the invoice and simulated payment amount
+when available. Payment language always states that payment is simulated.
+
+Polling ignores stale selection responses and retries transient read failures. A
+review saved during a queue outage offers an identical resume redispatch; failed
+workflow runs have no retry control.
+
+`frontend/openapi.json` and `src/types/generated-api.ts` are checked-in generated
+contracts. `make generate-api-types` refreshes them; `make check-generated`
+detects drift without rewriting the worktree.
 
 ## Execute-and-review worker smoke test
 
-Use one clean `APP_DATABASE_PATH` and `APP_UPLOAD_DIR` shared by the backend and
-worker processes, then start Valkey, the worker, and the backend as above.
+With Valkey, worker, and backend running against one clean database/upload pair:
 
-1. Upload `invoice_1001.txt`, poll its detail URL to `completed`, and confirm one
-   `PAYMENT_SUCCEEDED` event and one mock payment.
-2. Upload `invoice_1012.txt`, poll to `review_required`, then submit
-   `{"decision":"approve","reason":"Reviewed the documented OCR warning."}` to
-   `/api/v1/runs/{run_id}/review`.
-3. Poll the review run to `completed`; confirm the persisted review, one mock
-   payment, and one `PAYMENT_SUCCEEDED` event.
-4. Stop the backend and worker, then run `make broker-down`.
+1. Upload `data/invoices/invoice_1001.txt`, poll the returned detail URL to
+   `completed`, and confirm one `PAYMENT_SUCCEEDED` event and one mock payment.
+2. Upload `data/invoices/invoice_1012.txt` and poll to `review_required`.
+3. Submit `{"decision":"approve","reason":"Reviewed the documented OCR warning."}`
+   to `/api/v1/runs/{run_id}/review`.
+4. Poll to `completed`; confirm the persisted review, one mock payment, and one
+   `PAYMENT_SUCCEEDED` event.
+5. Stop backend and worker, then run `make broker-down`.
 
-This exercises real Valkey delivery while proving that business state is read
-back from SQLite rather than task results.
+This proves real queue delivery while business state is read from SQLite.
 
-## Configuration
+## Configuration and verification
 
 The main settings are `APP_DATABASE_PATH`, `APP_UPLOAD_DIR`,
 `APP_MAX_UPLOAD_BYTES`, `APP_DEFAULT_CURRENCY`,
 `APP_WORKFLOW_TIMEOUT_SECONDS`, broker/result URLs, provider/model, and
-`XAI_API_KEY` for Grok. Frontend API origin uses `NEXT_PUBLIC_API_BASE_URL`.
-Defaults are listed in [.env.example](../../.env.example).
+`XAI_API_KEY` for Grok. The frontend uses `NEXT_PUBLIC_API_BASE_URL`. Defaults and
+safe placeholders are in [.env.example](../../.env.example) and
+[frontend/.env.example](../../frontend/.env.example).
 
-## Demo scenarios and scope
+```bash
+make verify
+```
 
-- Clean: `invoice_1001.txt` completes with one mock payment.
-- Review/resume: `invoice_1012.txt` pauses on an OCR warning.
-- Reject: `invoice_1002.txt` explains an inventory mismatch.
-- Optional UI: upload the same scenarios and inspect the live audit timeline.
+This checks generated contracts, backend tests and branch coverage, Python lint,
+frontend tests and lint, TypeScript types, and a production build.
 
-- **Implemented:** the CLI, five API routes, two run-ID tasks, generated frontend
-  contract, workspace, and validation commands above.
-- **Take-home default:** CLI is primary; the broker-backed workspace is optional
-  polish and uses local processes.
-- **Production follow-up:** authentication/authorization, deployment manifests,
-  managed secrets, rate limits, and operational dashboards.
+## Scope boundary
+
+- **Implemented:** broker-free CLI, five API routes, two run-ID tasks, generated
+  frontend contract, review workspace, and repository verification.
+- **Take-home default:** the CLI is primary; the broker-backed workspace is
+  optional local polish.
+- **Production follow-up:** authentication and authorization, deployments,
+  managed secrets, rate limits, queue monitoring, and operational dashboards.

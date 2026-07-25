@@ -18,7 +18,7 @@ export function InvoiceDetails({ invoice }: { invoice: InvoiceData }) {
         <Fact label="Invoice date" value={invoice.invoice_date} />
         <Fact label="Due date" value={invoice.due_date} />
         <Fact label="Terms" value={invoice.payment_terms} />
-        <Fact label="Total" value={formatMoney(invoice.total)} />
+        <Fact emphasis label="Total" value={formatMoney(invoice.total)} />
         <Fact label="Currency" value={invoice.currency} />
       </dl>
       {invoice.items.length ? (
@@ -53,9 +53,17 @@ export function InvoiceDetails({ invoice }: { invoice: InvoiceData }) {
   );
 }
 
-function Fact({ label, value }: { label: string; value: string | null }) {
+function Fact({
+  emphasis = false,
+  label,
+  value
+}: {
+  emphasis?: boolean;
+  label: string;
+  value: string | null;
+}) {
   return (
-    <div>
+    <div className={emphasis ? "fact-emphasis" : undefined}>
       <dt>{label}</dt>
       <dd>{value ?? "—"}</dd>
     </div>

@@ -10,10 +10,5 @@ const labels: Record<RunStatus, string> = {
 };
 
 export function StatusBadge({ status }: { status: RunStatus }) {
-  return (
-    <span className={`status-badge status-${status}`}>
-      <span aria-hidden="true" className="status-dot" />
-      {labels[status]}
-    </span>
-  );
+  return <span className={`status-badge status-${status}`}>{labels[status]}</span>;
 }

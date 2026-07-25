@@ -3,33 +3,31 @@
   align-items: center;
   justify-content: space-between;
   gap: 24px;
-  padding: 20px 22px;
+  margin-bottom: 16px;
+  padding: 14px 16px;
   border: 1px solid var(--line-strong);
-  border-radius: 14px;
+  border-radius: 6px;
   background: var(--surface-strong);
-  box-shadow: 0 10px 32px rgb(23 33 29 / 5%);
 }
 
 .upload-card h2 {
-  font-size: 1.12rem;
+  font-size: 0.98rem;
 }
 
-.upload-card p:not(.panel-kicker) {
-  margin: 5px 0 0;
+.upload-card p {
+  margin: 3px 0 0;
   color: var(--muted);
-  font-size: 0.86rem;
+  font-size: 0.78rem;
 }
 
-.upload-actions {
-  display: flex;
-  align-items: center;
-  gap: 10px;
-}
-
+.upload-actions,
 .button-row {
   display: flex;
   align-items: center;
-  gap: 10px;
+  gap: 8px;
+}
+
+.button-row {
   margin-top: 12px;
 }
 
@@ -37,14 +35,14 @@
   display: block;
   min-width: 210px;
   max-width: 320px;
-  padding: 11px 13px;
+  padding: 10px 12px;
   overflow: hidden;
-  border: 1px dashed var(--line-strong);
-  border-radius: 8px;
+  border: 1px solid var(--line-strong);
+  border-radius: 5px;
   background: var(--canvas);
-  color: var(--muted);
+  color: var(--ink);
   cursor: pointer;
-  font-size: 0.86rem;
+  font-size: 0.82rem;
   text-overflow: ellipsis;
   white-space: nowrap;
 }
@@ -66,17 +64,13 @@
 
 .button {
   min-height: 44px;
-  padding: 10px 15px;
+  padding: 9px 14px;
   border: 1px solid transparent;
-  border-radius: 8px;
+  border-radius: 5px;
   cursor: pointer;
-  font-size: 0.84rem;
-  font-weight: 750;
-  transition: background-color 150ms ease, border-color 150ms ease, transform 150ms ease;
-}
-
-.button:hover:not(:disabled) {
-  transform: translateY(-1px);
+  font-size: 0.82rem;
+  font-weight: 720;
+  transition: background-color 150ms ease, border-color 150ms ease;
 }
 
 .button:disabled {
@@ -95,27 +89,37 @@
 
 .button-danger {
   border-color: #d6a29d;
-  background: #ffffff;
+  background: var(--surface-strong);
   color: var(--red);
 }
 
-.button-secondary {
-  margin-top: 12px;
+.button-danger:hover:not(:disabled) {
+  border-color: var(--red);
+}
+
+.button-secondary,
+.button-quiet {
   border-color: var(--line-strong);
   background: var(--surface-strong);
   color: var(--forest);
 }
 
+.button-secondary {
+  margin-top: 12px;
+}
+
 .announcement {
-  min-height: 38px;
-  padding: 8px 0;
+  display: grid;
+  gap: 6px;
+  margin: -6px 0 16px;
 }
 
 .alert {
   margin: 0;
-  padding: 8px 12px;
-  border-radius: 7px;
-  font-size: 0.83rem;
+  padding: 9px 12px;
+  border-left: 3px solid currentColor;
+  border-radius: 3px;
+  font-size: 0.8rem;
 }
 
 .alert-error,
