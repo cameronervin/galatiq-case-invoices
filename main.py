@@ -60,7 +60,7 @@ def build_parser() -> argparse.ArgumentParser:
     parser.add_argument(
         "--no-color",
         action="store_true",
-        help="Disable terminal color in pretty output.",
+        help="Disable terminal styling in pretty output.",
     )
     return parser
 
@@ -153,10 +153,12 @@ def _print_error(
 
 
 def _console(stream, *, no_color: bool) -> Console:
+    disable_styles = no_color or "NO_COLOR" in os.environ
     return Console(
         file=stream,
         highlight=False,
-        no_color=no_color or "NO_COLOR" in os.environ,
+        color_system=None if disable_styles else "auto",
+        no_color=disable_styles,
     )
 
 

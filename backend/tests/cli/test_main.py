@@ -18,6 +18,11 @@ from backend.app.schemas.domain import (
 PROJECT_ROOT = Path(__file__).resolve().parents[3]
 
 
+class _TerminalBuffer(StringIO):
+    def isatty(self) -> bool:
+        return True
+
+
 def test_cli_processes_invoice_without_broker(tmp_path: Path, capsys) -> None:
     settings = Settings(
         database_path=tmp_path / "app.db",
@@ -357,9 +362,35 @@ def test_pretty_workflow_failure_is_human_readable(tmp_path: Path, capsys) -> No
     assert str(tmp_path) not in captured.out
 
 
-def test_no_color_environment_disables_rich_color(monkeypatch) -> None:
-    monkeypatch.setenv("NO_COLOR", "")
+@pytest.mark.parametrize(
+    ("no_color", "use_environment"),
+    [(True, False), (False, True)],
+)
+def test_no_color_modes_disable_terminal_styling(
+    monkeypatch, no_color: bool, use_environment: bool
+) -> None:
+    monkeypatch.setenv("TERM", "xterm-256color")
+    if use_environment:
+        monkeypatch.setenv("NO_COLOR", "")
+    else:
+        monkeypatch.delenv("NO_COLOR", raising=False)
+    output = _TerminalBuffer()
 
-    console = cli._console(StringIO(), no_color=False)
+    console = cli._console(output, no_color=no_color)
+    console.print("styled", style="bold red")
 
     assert console.no_color is True
+    assert console.color_system is None
+    assert "\x1b" not in output.getvalue()
+
+
+def test_console_preserves_terminal_styling_by_default(monkeypatch) -> None:
+    monkeypatch.setenv("TERM", "xterm-256color")
+    monkeypatch.delenv("NO_COLOR", raising=False)
+    output = _TerminalBuffer()
+
+    console = cli._console(output, no_color=False)
+    console.print("styled", style="bold red")
+
+    assert console.color_system is not None
+    assert "\x1b" in output.getvalue()

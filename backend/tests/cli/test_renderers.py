@@ -80,6 +80,7 @@ def test_renderer_groups_findings_preserves_literals_and_missing_values() -> Non
         file=output,
         width=100,
         force_terminal=True,
+        color_system=None,
         no_color=True,
         highlight=False,
     )
